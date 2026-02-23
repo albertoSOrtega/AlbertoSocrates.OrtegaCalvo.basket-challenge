@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -32,7 +33,6 @@ public class InGameUIController : MonoBehaviour
     {
         //shootText.text = $"Shooting with this power: {shootPower}";
         //shootText.DOFade(0, 2f);
-
     }
 
     public void UIHandleCancelShoot(float shootPower)
