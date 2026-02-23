@@ -12,7 +12,7 @@ public class ThrowBallInputHandler : MonoBehaviour
 
     // Events
     public event System.Action OnSwipeStarted; 
-    public event System.Action OnSwipeCancelled;
+    public event System.Action<float> OnSwipeCancelled;
     public event System.Action<float> OnShootPowerChanged;
     public event System.Action<float> OnShootReleased;
     
@@ -24,6 +24,7 @@ public class ThrowBallInputHandler : MonoBehaviour
     // New Input System device references
     private Touchscreen touchscreen;
     private Mouse mouse;
+
 
     // Mouse input (PC / Unity Editor)
     private void HandleMouseInput()
@@ -106,7 +107,7 @@ public class ThrowBallInputHandler : MonoBehaviour
         else
         {
             Debug.Log($"[ThrowBallInputHandler] Swipe cancelled - Not enough power. Power: {currentShootPower:P0}");
-            OnSwipeCancelled?.Invoke();
+            OnSwipeCancelled?.Invoke(currentShootPower);
         }
 
         currentShootPower = 0f;
