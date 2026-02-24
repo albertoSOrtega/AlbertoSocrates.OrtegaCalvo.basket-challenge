@@ -1,15 +1,15 @@
 ﻿using DG.Tweening;
 using System.Collections;
 using UnityEngine;
-using static UnityEngine.UI.Image;
 
 public class BallShooterController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform ballTransform;
     [SerializeField] private Transform rimTransform;
-    [SerializeField] private Rigidbody ballRb;
     public ShootingPositionController shootingPositionController;
+    // gotten from the first ball transform
+    private Rigidbody ballRb; 
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
@@ -36,9 +36,6 @@ public class BallShooterController : MonoBehaviour
 
     private void CalculateControlPoints()
     {
-        //inCP = ballTransform.position + inCPOffset;
-        //outCP = rimTransform.position + outCPOffset;
-
         Vector3 flatDirection = (rimTransform.position - ballTransform.position);
         flatDirection.y = 0f;
         flatDirection = flatDirection.normalized;
@@ -165,6 +162,7 @@ public class BallShooterController : MonoBehaviour
 
     IEnumerator Start()
     {
+        ballRb = ballTransform.GetComponent<Rigidbody>();
         isShooting = false;
         yield return new WaitForSeconds(1f);
         StartCoroutine(ShootingTest(4f));
