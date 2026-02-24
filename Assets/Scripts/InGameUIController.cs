@@ -11,9 +11,9 @@ public class InGameUIController : MonoBehaviour
     public Slider shootPowerSlider;
     public TextMeshProUGUI shootText;
     public ThrowBallInputHandler throwBallInputHandler;
-    //public RectTransform perfectZoneRectTransform;
     public Image perfectZoneImage;
     public PerfectZoneController perfectZoneController;
+    public BallShooterController ballShooterController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -29,6 +29,9 @@ public class InGameUIController : MonoBehaviour
 
         // Suscribe to the eevnts of the PerfectZoneController to initialize the perfect zone rect when randomized
         perfectZoneController.OnPerfectZoneRandomized += InitializePerfectZoneRect;
+
+        // Subscribe to the events of the BallShooterController
+        ballShooterController.OnShotCompleted += ResetAfterShot;
     }
 
     private void OnDisable()
@@ -39,8 +42,11 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnShootReleased -= UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
-        // Suscribe to the eevnts of the PerfectZoneController
+        // Unsubscribe to the eevnts of the PerfectZoneController
         perfectZoneController.OnPerfectZoneRandomized -= InitializePerfectZoneRect;
+
+        // Unsubscribe to the events of the BallShooterController
+        ballShooterController.OnShotCompleted -= ResetAfterShot;
     }
 
     public void UIHandleShoot(float shootPower)
@@ -66,6 +72,12 @@ public class InGameUIController : MonoBehaviour
     public void ResetSlider()
     {
         shootPowerSlider.value = 0f;
+    }
+
+    public void ResetAfterShot()
+    {
+        ResetSlider();
+        UpdateSlider(0f);
     }
 
     public void InitializePerfectZoneRect()

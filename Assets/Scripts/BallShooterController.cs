@@ -5,11 +5,9 @@ using UnityEngine;
 public class BallShooterController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Transform ballTransform;
     [SerializeField] private Transform rimTransform;
-    public ShootingPositionController shootingPositionController;
-    // gotten from the first ball transform
-    private Rigidbody ballRb; 
+    //public ShootingPositionController shootingPositionController;
+    
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
@@ -33,6 +31,21 @@ public class BallShooterController : MonoBehaviour
     private bool isShooting = false;
     private Vector3 inCP;
     private Vector3 outCP;
+
+    // Balls that the controller will shoot - Gotten from the pool
+    private Rigidbody ballRb;
+    private Transform ballTransform;
+
+    private void Awake()
+    {
+        isShooting = false;
+    }
+
+    public void SetBall(Transform ballTransformParam)
+    {
+        ballTransform = ballTransformParam;
+        ballRb = ballTransform.GetComponent<Rigidbody>();
+    }
 
     private void CalculateControlPoints()
     {
@@ -90,6 +103,7 @@ public class BallShooterController : MonoBehaviour
     {
         // Re-enable physics so the ball falls naturally
         ballRb.isKinematic = false;
+        ballRb.useGravity = true;
 
         isShooting = false;
 
@@ -98,16 +112,15 @@ public class BallShooterController : MonoBehaviour
         Debug.Log("Perfect shot completed. RB Physics are enabled.");
     }
 
-    public IEnumerator ShootingTest(float shootingDelay)
-    {
-        foreach (var shootingPosition in shootingPositionController.GetCurrentRoundSemicirclePositions())
-        {
-            ballTransform.position = shootingPosition.WorldPosition + new Vector3(0f, 2f, 0f); // Reset ball position above the parent
-            StartPerfectShot();
-            yield return new WaitForSeconds(shootingDelay);
-        }
-    }
-
+    //public IEnumerator ShootingTest(float shootingDelay)
+    //{
+    //    foreach (var shootingPosition in shootingPositionController.GetCurrentRoundSemicirclePositions())
+    //    {
+    //        ballTransform.position = shootingPosition.WorldPosition + new Vector3(0f, 2f, 0f); // Reset ball position above the parent
+    //        StartPerfectShot();
+    //        yield return new WaitForSeconds(shootingDelay);
+    //    }
+    //}
 
     private void OnDrawGizmos()
     {
@@ -160,11 +173,11 @@ public class BallShooterController : MonoBehaviour
              + (t * t * t * p3);
     }
 
-    IEnumerator Start()
-    {
-        ballRb = ballTransform.GetComponent<Rigidbody>();
-        isShooting = false;
-        yield return new WaitForSeconds(1f);
-        StartCoroutine(ShootingTest(4f));
-    }
+    //IEnumerator Start()
+    //{
+    //    ballRb = ballTransform.GetComponent<Rigidbody>();
+    //    isShooting = false;
+    //    yield return new WaitForSeconds(1f);
+    //    StartCoroutine(ShootingTest(4f));
+    //}
 }

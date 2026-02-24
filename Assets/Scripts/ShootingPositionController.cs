@@ -51,22 +51,64 @@ public class ShootingPositionController : MonoBehaviour
 
     // Events
     public event System.Action<ShootingPositionData> OnPositionChanged;
+    public event System.Action OnNewRoundGenerated;
 
     // State
     private List<ShootingPositionData> currentRoundSemicirclePositions = new List<ShootingPositionData>();
     private int currentPositionIndex = 0;
-    private bool isCurrentSemicircleRight = true;
-    private int currentSemicircleDistanceIndex = 0;
 
     public List<ShootingPositionData> GetCurrentRoundSemicirclePositions()
     {
         return currentRoundSemicirclePositions;
     }
 
+    public ShootingPositionData GetCurrentPosition()
+    {
+        return currentRoundSemicirclePositions[currentPositionIndex];
+    }
+
+    public int GetCurrentPositionIndex()
+    {
+        return currentPositionIndex;
+    }
+
+    // Generates a round with random orientation (right or left) and random distances for each semicircle within the configured ranges.
+    public void GenerateNewRound()
+    {
+        bool randomOrientation = Random.value > 0.5f;
+        currentPositionIndex = 0;
+        GenerateAllRoundSemicircles(randomOrientation);
+        OnNewRoundGenerated?.Invoke();
+    }
+
+    // Generates a round with a given orientation (right or left) and random distances for each semicircle within the configured ranges.
+    public void GenerateNewRound(bool isInitialOrientationRight)
+    {
+        currentPositionIndex = 0;
+        GenerateAllRoundSemicircles(isInitialOrientationRight);
+        OnNewRoundGenerated?.Invoke();
+    }
+
+    public int AdvancePosition()
+    {
+        currentPositionIndex++;
+        int currentRoundPositionsSize = currentRoundSemicirclePositions.Count;
+
+        if (currentPositionIndex >= currentRoundPositionsSize)
+        {
+            GenerateNewRound(!currentRoundSemicirclePositions[currentRoundPositionsSize-1].IsZoneRight);
+        }
+        else
+        {
+            OnPositionChanged?.Invoke(GetCurrentPosition());
+        }
+
+        return currentPositionIndex;
+    }
+
     public void GenerateAllRoundSemicircles(bool isInitialOrientationRight)
     {
         currentRoundSemicirclePositions.Clear();
-        currentSemicircleDistanceIndex = 0;
 
         bool isZoneRight = isInitialOrientationRight;
         List<float> generatedDistances = new List<float>();
@@ -209,9 +251,7 @@ public class ShootingPositionController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        bool randomOrientation = Random.value > 0.5f;
-        isCurrentSemicircleRight = randomOrientation;
-        GenerateAllRoundSemicircles(randomOrientation);
+        GenerateNewRound();
     }
 
     // Update is called once per frame
