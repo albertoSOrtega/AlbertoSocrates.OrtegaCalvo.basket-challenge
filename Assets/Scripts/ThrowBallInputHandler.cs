@@ -4,27 +4,27 @@ using UnityEngine.InputSystem.Controls;
 
 public class ThrowBallInputHandler : MonoBehaviour
 {
-
     // Initial configuration with pixels
     [Header("Swipe Configuration")]
     [SerializeField] private float maxSwipeDistance = 500f;
     [SerializeField] private float minSwipeDistance = 50f;
+    [SerializeField] private float maxSwipeTime = 1.5f;
 
     // Events
-    public event System.Action OnSwipeStarted; 
+    public event System.Action OnSwipeStarted;
     public event System.Action<float> OnSwipeCancelled;
     public event System.Action<float> OnShootPowerChanged;
     public event System.Action<float> OnShootReleased;
-    
 
     private Vector2 startPosition;
     private bool isTrackingSwipe = false;
     private float currentShootPower;
+    private float swipeTimer;
+    private float lastSwipeY;  // only goes up
 
     // New Input System device references
     private Touchscreen touchscreen;
     private Mouse mouse;
-
 
     // Mouse input (PC / Unity Editor)
     private void HandleMouseInput()
@@ -73,8 +73,10 @@ public class ThrowBallInputHandler : MonoBehaviour
     private void StartTrackingSwipe(Vector2 screenPosition)
     {
         startPosition = screenPosition;
+        lastSwipeY = screenPosition.y;
         isTrackingSwipe = true;
         currentShootPower = 0f;
+        swipeTimer = 0f;
 
         Debug.Log($"[ThrowBallInputHandler] Swipe started at: {startPosition}");
         OnSwipeStarted?.Invoke();
@@ -83,11 +85,14 @@ public class ThrowBallInputHandler : MonoBehaviour
     // Called every frame the user keeps clicking/tapping the screen - calculates power based on the vertical distance from the starting point
     private void TrackingSwipe(Vector2 currentScreenPosition)
     {
-        // Only count positive Y axis
-        float verticalDelta = currentScreenPosition.y - startPosition.y;
-        float clampedDelta = Mathf.Max(0f, verticalDelta);
+        // Ignore downward movement
+        if (currentScreenPosition.y <= lastSwipeY) return;
 
-        currentShootPower = Mathf.Clamp01(clampedDelta / maxSwipeDistance);
+        lastSwipeY = currentScreenPosition.y;
+
+        // Only count positive Y axis
+        float verticalDelta = lastSwipeY - startPosition.y;
+        currentShootPower = Mathf.Clamp01(verticalDelta / maxSwipeDistance);
 
         OnShootPowerChanged?.Invoke(currentShootPower);
     }
@@ -96,6 +101,7 @@ public class ThrowBallInputHandler : MonoBehaviour
     private void EndTrackingSwipe(Vector2 releasePosition)
     {
         isTrackingSwipe = false;
+        swipeTimer = 0f;
 
         float verticalDelta = releasePosition.y - startPosition.y;
 
@@ -135,19 +141,19 @@ public class ThrowBallInputHandler : MonoBehaviour
     {
         switch (change)
         {
-            case InputDeviceChange.Added:       
+            case InputDeviceChange.Added:
                 Debug.Log("Device Added");
                 break;
-            case InputDeviceChange.Removed:      
+            case InputDeviceChange.Removed:
                 Debug.Log("Device Disconnected");
                 break;
-            case InputDeviceChange.Enabled:      
+            case InputDeviceChange.Enabled:
                 Debug.Log("Device Enabled");
                 break;
-            case InputDeviceChange.Disabled:     
+            case InputDeviceChange.Disabled:
                 Debug.Log("Device Disabled");
                 break;
-            case InputDeviceChange.Reconnected:  // dispositivo reconectado
+            case InputDeviceChange.Reconnected:
                 Debug.Log("Device Reconnected");
                 break;
         }
@@ -160,15 +166,30 @@ public class ThrowBallInputHandler : MonoBehaviour
         mouse = Mouse.current;
     }
 
-    void Start()
+    private void Start()
     {
         currentShootPower = 0f;
+        swipeTimer = 0f;
     }
 
     // Update: detects mouse on Editor/PC and touch on mobile
     private void Update()
     {
         // Priority: use touchscreen if available (mobile), otherwise use mouse (PC/Editor)
+        // Swipe time limit
+        if (isTrackingSwipe)
+        {
+            swipeTimer += Time.deltaTime;
+            if (swipeTimer >= maxSwipeTime)
+            {
+                Debug.Log($"[ThrowBallInputHandler] Swipe time limit reached. Power: {currentShootPower:P0}");
+                EndTrackingSwipe(touchscreen != null
+                    ? touchscreen.primaryTouch.position.ReadValue()
+                    : mouse.position.ReadValue());
+                isTrackingSwipe = false;
+            }
+        }
+
         if (touchscreen != null)
         {
             HandleTouchInput();

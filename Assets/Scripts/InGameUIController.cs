@@ -51,13 +51,24 @@ public class InGameUIController : MonoBehaviour
 
     public void UIHandleShoot(float shootPower)
     {
+        shootText.DOKill();
         shootText.alpha = 1f; // Reset alpha to fully visible
-        shootText.text = $"Shooting with this power: {shootPower}";
+        if (perfectZoneController.IsInPerfectZone(shootPower))
+        {
+            shootText.text = $"Shooting with this power: {shootPower}";
+        }
+        else
+        {
+            shootText.text = $"You Failed!";
+            ResetAfterShot();
+        }
+        
         shootText.DOFade(0, 2f);
     }
 
     public void UIHandleCancelShoot(float shootPower)
     {
+        shootText.DOKill();
         shootText.alpha = 1f; // Reset alpha to fully visible
         shootText.text = $"Shoot cancelled with this power: {shootPower}";
         shootText.DOFade(0, 2f);

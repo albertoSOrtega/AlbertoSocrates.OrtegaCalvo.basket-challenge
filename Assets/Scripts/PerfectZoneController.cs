@@ -6,6 +6,8 @@ public class PerfectZoneController : MonoBehaviour
     [Header("Perfect Shooting configuration parameters")]
     [Range(0.1f, 0.3f)]
     public float perfectZoneSize = 0.1f;
+    [Range(0.15f, 0.3f)]
+    public float perfectZoneStartMin = 0.15f;
 
     [HideInInspector]
     public float perfectZoneStart;
@@ -23,7 +25,7 @@ public class PerfectZoneController : MonoBehaviour
     // Generates a new random position for the perfect zone
     public void RandomizePerfectZone()
     {
-        perfectZoneStart = Random.Range(0f, 1f - perfectZoneSize);
+        perfectZoneStart = Random.Range(perfectZoneStartMin, 1f - perfectZoneSize);
         perfectZoneEnd = perfectZoneStart + perfectZoneSize;
 
         OnPerfectZoneRandomized?.Invoke();
