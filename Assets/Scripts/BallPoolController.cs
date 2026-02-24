@@ -43,7 +43,7 @@ public class BallPoolController : MonoBehaviour
     // Returns an available ball from the pool, and activates and positions it at the given position
     // If randomBallRotation is true, the ball will be given a random rotation around the all axis,
     // otherwise it will be set to the default rotation (Quaternion.identity)
-    public GameObject GetBall(Vector3 position, bool randomBallRotation)
+    public GameObject GetBall(Vector3 position, bool randomBallRotation, Transform playerTransform)
     {
         foreach (GameObject ball in pool)
         {
@@ -52,6 +52,8 @@ public class BallPoolController : MonoBehaviour
                 ball.transform.position = position;
                 ball.transform.rotation = randomBallRotation ? Random.rotation : Quaternion.identity;
                 ball.SetActive(true);
+                // Parent the ball to the player for easier handling
+                ball.transform.SetParent(playerTransform);
                 return ball;
             }
         }
@@ -68,6 +70,9 @@ public class BallPoolController : MonoBehaviour
 
     private IEnumerator ReturnBallCoroutine(GameObject ball, float delay)
     {
+        // back to pool hierarchy
+        ball.transform.SetParent(ballsPoolContainer);
+
         yield return new WaitForSeconds(delay);
 
         Rigidbody rb = ball.GetComponent<Rigidbody>();

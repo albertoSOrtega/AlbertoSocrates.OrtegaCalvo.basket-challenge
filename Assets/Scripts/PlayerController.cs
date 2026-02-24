@@ -1,5 +1,5 @@
-using JetBrains.Annotations;
-using System.Collections.Generic;
+using DG.Tweening;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -46,7 +46,7 @@ public class PlayerController : MonoBehaviour
     {
         if (perfectZoneController.IsInPerfectZone(shootPower))
         {
-            ballShooterController.StartPerfectShot();
+            StartCoroutine(PlayerJumpAndShoot());         
         }
         else
         {
@@ -102,9 +102,16 @@ public class PlayerController : MonoBehaviour
 
     private void SpawnBall()
     {
-        currentBall = BallPoolController.instance.GetBall(GetBallSpawnPosition(), true);
+        currentBall = BallPoolController.instance.GetBall(GetBallSpawnPosition(), true, transform);
         ballShooterController.SetBall(currentBall.transform);
 
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
+    }
+
+    private IEnumerator PlayerJumpAndShoot()
+    {
+        transform.DOLocalJump(transform.position, 1f, 1, 1f);
+        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+        ballShooterController.StartPerfectShot();
     }
 }
