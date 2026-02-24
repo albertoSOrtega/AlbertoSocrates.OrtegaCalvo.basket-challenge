@@ -5,9 +5,7 @@ using UnityEngine;
 public class BallShooterController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Transform rimTransform;
-    //public ShootingPositionController shootingPositionController;
-    
+    [SerializeField] private Transform rimTransform;    
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
@@ -172,12 +170,4 @@ public class BallShooterController : MonoBehaviour
              + (3f * alpha * t * t * p2)
              + (t * t * t * p3);
     }
-
-    //IEnumerator Start()
-    //{
-    //    ballRb = ballTransform.GetComponent<Rigidbody>();
-    //    isShooting = false;
-    //    yield return new WaitForSeconds(1f);
-    //    StartCoroutine(ShootingTest(4f));
-    //}
 }

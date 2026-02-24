@@ -61,7 +61,8 @@ public class PlayerController : MonoBehaviour
 
         shootingPositionController.AdvancePosition();
 
-        if (shootingPositionController.GetCurrentPositionIndex() < shootingPositionController.GetCurrentRoundSemicirclePositions().Count)
+        // checks that the player doesn't move to the next position on the first round, since it's already in position 0 when a new round is generated
+        if (shootingPositionController.GetCurrentPositionIndex() != 0)
         {
             SetupPlayerInPosition();
         }
