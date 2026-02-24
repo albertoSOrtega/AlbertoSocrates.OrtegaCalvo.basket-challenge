@@ -58,6 +58,11 @@ public class ShootingPositionController : MonoBehaviour
     private bool isCurrentSemicircleRight = true;
     private int currentSemicircleDistanceIndex = 0;
 
+    public List<ShootingPositionData> GetCurrentRoundSemicirclePositions()
+    {
+        return currentRoundSemicirclePositions;
+    }
+
     public void GenerateAllRoundSemicircles(bool isInitialOrientationRight)
     {
         currentRoundSemicirclePositions.Clear();
