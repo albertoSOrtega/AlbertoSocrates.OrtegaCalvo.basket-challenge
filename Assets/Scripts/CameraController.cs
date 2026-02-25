@@ -112,7 +112,10 @@ public class CameraController : MonoBehaviour
         {
             TriggerPerfectShotShake();
         }
-        // todo: else
+        else
+        {
+            StartCoroutine(TriggerImperfectShotDelay());
+        }
     }
 
     // Shakes the camera using DOTween
@@ -127,6 +130,15 @@ public class CameraController : MonoBehaviour
             currentTarget = playerTransform;
             SnapCameraToPlayer();
         });
+    }
+
+    // Shakes the camera using DOTween
+    private IEnumerator TriggerImperfectShotDelay()
+    {
+        yield return new WaitForSeconds(shakeDuration);
+        isShaking = false;
+        currentTarget = playerTransform;
+        SnapCameraToPlayer();
     }
 
     private void StartFollowingBall()

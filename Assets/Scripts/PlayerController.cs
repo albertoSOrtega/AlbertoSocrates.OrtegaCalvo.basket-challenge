@@ -54,7 +54,8 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Shot not in perfect zone. No action taken.");
             // todo: 2point shoot
-            throwBallInputHandler.EnableInput(); 
+            //throwBallInputHandler.EnableInput(); 
+            StartCoroutine(PlayerJumpAndImperfectShoot());
         }
     }
 
@@ -124,6 +125,13 @@ public class PlayerController : MonoBehaviour
         transform.DOLocalJump(transform.position, 1f, 1, 1f);
         yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
         ballShooterController.StartPerfectShot();
+    }
+
+    private IEnumerator PlayerJumpAndImperfectShoot()
+    {
+        transform.DOLocalJump(transform.position, 1f, 1, 1f);
+        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+        ballShooterController.StartImperfectShot();
     }
 
     private void Start()
