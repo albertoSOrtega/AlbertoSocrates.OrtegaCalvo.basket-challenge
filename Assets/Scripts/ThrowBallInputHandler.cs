@@ -49,7 +49,7 @@ public class ThrowBallInputHandler : MonoBehaviour
         cameraController.OnCameraBehindPlayer -= EnableInput;
     }
 
-    // Todo: set topo private
+    //todo: private
     public void EnableInput()
     {
         isInputEnabled = true;

@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     // Reference to components
     private ThrowBallInputHandler throwBallInputHandler;
     private BallShooterController ballShooterController;
-    private PerfectZoneController perfectZoneController;
+    private ShootingBarZoneController shootingBarZoneController;
     private ShootingPositionController shootingPositionController;
 
     [Header("Ball Spawn Configuration")]
@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour
     {
         throwBallInputHandler = GetComponent<ThrowBallInputHandler>();
         ballShooterController = GetComponent<BallShooterController>();
-        perfectZoneController = GetComponent<PerfectZoneController>();
+        shootingBarZoneController = GetComponent<ShootingBarZoneController>();
         shootingPositionController = GetComponent<ShootingPositionController>();
     }
 
@@ -46,13 +46,19 @@ public class PlayerController : MonoBehaviour
 
     private void HandleShootReleased(float shootPower)
     {
-        if (perfectZoneController.IsInPerfectZone(shootPower))
+        if (shootingBarZoneController.IsInPerfectZone(shootPower))
         {
             StartCoroutine(PlayerJumpAndShoot(true));         
         }
-        else
+        else if (shootingBarZoneController.isInImperfectZone(shootPower))
         {
             StartCoroutine(PlayerJumpAndShoot(false));
+        }
+        else
+        {
+            // Re-enable input immediately since no shot will be taken
+            throwBallInputHandler.EnableInput(); 
+            Debug.Log("Shot failed! No shot will be taken.");
         }
     }
 

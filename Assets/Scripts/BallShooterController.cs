@@ -9,6 +9,7 @@ public class BallShooterController : MonoBehaviour
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
+    [SerializeField] private float backspinSpeedDegreesPerSecond = 720f;
 
     [Header("Bezier Curve Parameters Adjustment")]
     [SerializeField] private Vector3 inCPOffset = new Vector3(0f, 4f, 1f);
@@ -42,6 +43,7 @@ public class BallShooterController : MonoBehaviour
     private Vector3 outCPImperfect;
     private Vector3 currentRimEdgePoint;
     private Vector3 currentRimEdgeDirection;
+    private Vector3 spinAxis;
 
     // Balls that the controller will shoot - Gotten from the pool
     private Rigidbody ballRb;
@@ -80,6 +82,11 @@ public class BallShooterController : MonoBehaviour
         isShooting = true;
         isCurrentShotPerfect = isPerfect;
         ballRb.isKinematic = true;
+
+        // Backspin axis (horizontal, perpendicular to shot)
+        Vector3 shotDir = (rimTransform.position - shotOrigin).normalized;
+        spinAxis = Vector3.Cross(shotDir, Vector3.up).normalized;
+
         OnShotStarted?.Invoke();
         return ballTransform.position;
     }
@@ -101,6 +108,19 @@ public class BallShooterController : MonoBehaviour
         ballRb.useGravity = true;
     }
 
+    // From wikipedia: https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Cubic_B%C3%A9zier_curves
+    // B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3, t in [0, 1]
+    private Vector3 CalculateCubicBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
+    {
+        float alpha = 1f - t;
+        return (alpha * alpha * alpha * p0)
+             + (3f * alpha * alpha * t * p1)
+             + (3f * alpha * t * t * p2)
+             + (t * t * t * p3);
+    }
+
+    // Starts the perfect shot by calculating control points, then animating the ball along the Bezier curve to the rim position.
+    // On completion, it calls OnShotComplete to re-enable physics and notify listeners.
     public void StartPerfectShot()
     {
         if (isShooting) { Debug.LogWarning("Already shooting."); return; }
@@ -112,12 +132,16 @@ public class BallShooterController : MonoBehaviour
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
             ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, rimTransform.position);
+
+            // Ball backspin
+            ballTransform.Rotate(spinAxis, backspinSpeedDegreesPerSecond * Time.deltaTime, Space.World);
         })
         .SetEase(Ease.Linear)
         .OnComplete(OnShotComplete);
     }
 
-
+    // Starts the imperfect shot by calculating control points, then animating the ball along a Bezier curve to a random point on the rim edge.
+    // On completion, it applies an impulse to the ball away from the rim edge point and notify listeners in the function
     public void StartImperfectShot()
     {
         if (isShooting) { Debug.LogWarning("Already shooting."); return; }
@@ -135,6 +159,9 @@ public class BallShooterController : MonoBehaviour
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
             ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, currentRimEdgePoint);
+
+            // Ball backspin
+            ballTransform.Rotate(spinAxis, backspinSpeedDegreesPerSecond * Time.deltaTime, Space.World);
         })
         .SetEase(Ease.Linear)
         .OnComplete(() => ApplyRimImpulse(currentRimEdgeDirection));
@@ -229,16 +256,5 @@ public class BallShooterController : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(currentRimEdgePoint, gizmoSphereRadius * 3f);
-    }
-
-    // From wikipedia: https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Cubic_B%C3%A9zier_curves
-    // B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3, t in [0, 1]
-    private Vector3 CalculateCubicBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
-    {
-        float alpha = 1f - t;
-        return (alpha * alpha * alpha * p0)
-             + (3f * alpha * alpha * t * p1)
-             + (3f * alpha * t * t * p2)
-             + (t * t * t * p3);
     }
 }
