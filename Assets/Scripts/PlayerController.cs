@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform rimTransformReference;
+    [SerializeField] private CameraController cameraController;
 
     // Reference to components
     private ThrowBallInputHandler throwBallInputHandler;
@@ -19,6 +20,7 @@ public class PlayerController : MonoBehaviour
 
     // State
     private GameObject currentBall;
+    private bool isFirstRound = true;
 
     private void Awake()
     {
@@ -51,10 +53,12 @@ public class PlayerController : MonoBehaviour
         else
         {
             Debug.Log("Shot not in perfect zone. No action taken.");
+            // todo: 2point shoot
+            throwBallInputHandler.EnableInput(); 
         }
     }
 
-    private void HandleShotCompleted()
+    private void HandleShotCompleted(bool isPerfectShot)
     {
         BallPoolController.instance.ReturnBall(currentBall, 2f);
         currentBall = null;
@@ -72,6 +76,13 @@ public class PlayerController : MonoBehaviour
     {
         MovePlayerToCurrentPosition();
         SpawnBall();
+
+        // if it's the first round, we snap the camera to the player
+        if (isFirstRound)
+        {
+            cameraController.SnapCameraToPlayer();
+            isFirstRound = false;
+        }
     }
 
     private void MovePlayerToCurrentPosition()
@@ -113,5 +124,11 @@ public class PlayerController : MonoBehaviour
         transform.DOLocalJump(transform.position, 1f, 1, 1f);
         yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
         ballShooterController.StartPerfectShot();
+    }
+
+    private void Start()
+    {
+        shootingPositionController.GenerateNewRound();
+        //cameraController.SnapCameraToTarget();
     }
 }

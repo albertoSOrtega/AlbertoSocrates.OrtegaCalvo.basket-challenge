@@ -251,7 +251,7 @@ public class ShootingPositionController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GenerateNewRound();
+        //GenerateNewRound();
     }
 
     // Update is called once per frame

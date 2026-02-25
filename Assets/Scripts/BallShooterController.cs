@@ -23,10 +23,11 @@ public class BallShooterController : MonoBehaviour
 
     // Events
     public event System.Action OnShotStarted;
-    public event System.Action OnShotCompleted;
+    public event System.Action<bool> OnShotCompleted;
 
     // State
     private bool isShooting = false;
+    private bool isCurrentShotPerfect = false;
     private Vector3 inCP;
     private Vector3 outCP;
 
@@ -43,6 +44,11 @@ public class BallShooterController : MonoBehaviour
     {
         ballTransform = ballTransformParam;
         ballRb = ballTransform.GetComponent<Rigidbody>();
+    }
+
+    public Transform GetBallTransform()
+    {
+        return ballTransform;
     }
 
     private void CalculateControlPoints()
@@ -68,6 +74,7 @@ public class BallShooterController : MonoBehaviour
         shotOrigin = ballTransform.position; 
 
         isShooting = true;
+        isCurrentShotPerfect = true;
 
         // Disable physics during the shot
         ballRb.isKinematic = true;
@@ -105,7 +112,7 @@ public class BallShooterController : MonoBehaviour
 
         isShooting = false;
 
-        OnShotCompleted?.Invoke();
+        OnShotCompleted?.Invoke(isCurrentShotPerfect);
 
         Debug.Log("Perfect shot completed. RB Physics are enabled.");
     }
