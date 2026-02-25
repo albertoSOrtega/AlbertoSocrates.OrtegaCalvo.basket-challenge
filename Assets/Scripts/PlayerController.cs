@@ -48,14 +48,11 @@ public class PlayerController : MonoBehaviour
     {
         if (perfectZoneController.IsInPerfectZone(shootPower))
         {
-            StartCoroutine(PlayerJumpAndShoot());         
+            StartCoroutine(PlayerJumpAndShoot(true));         
         }
         else
         {
-            Debug.Log("Shot not in perfect zone. No action taken.");
-            // todo: 2point shoot
-            //throwBallInputHandler.EnableInput(); 
-            StartCoroutine(PlayerJumpAndImperfectShoot());
+            StartCoroutine(PlayerJumpAndShoot(false));
         }
     }
 
@@ -120,23 +117,24 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }
 
-    private IEnumerator PlayerJumpAndShoot()
+    private IEnumerator PlayerJumpAndShoot(bool isPerfectShot)
     {
         transform.DOLocalJump(transform.position, 1f, 1, 1f);
         yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
-        ballShooterController.StartPerfectShot();
-    }
 
-    private IEnumerator PlayerJumpAndImperfectShoot()
-    {
-        transform.DOLocalJump(transform.position, 1f, 1, 1f);
-        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
-        ballShooterController.StartImperfectShot();
+        if (isPerfectShot)
+        {
+            ballShooterController.StartPerfectShot();
+        }
+        else
+        {
+            ballShooterController.StartImperfectShot();
+        }
+        
     }
 
     private void Start()
     {
         shootingPositionController.GenerateNewRound();
-        //cameraController.SnapCameraToTarget();
     }
 }

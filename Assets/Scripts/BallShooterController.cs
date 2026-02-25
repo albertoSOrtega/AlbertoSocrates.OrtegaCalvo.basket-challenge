@@ -24,10 +24,9 @@ public class BallShooterController : MonoBehaviour
 
     [Header("Gizmos")]
     public bool showGizmos = true;
-    public Color gizmoColor = Color.yellow;
     public int gizmoResolution = 20;
     public float gizmoSphereRadius = 0.05f;
-    private Vector3 shotOrigin; 
+    private bool hasImperfectShotData = false; // Control variable for the Gizmos
 
     // Events
     public event System.Action OnShotStarted;
@@ -36,15 +35,13 @@ public class BallShooterController : MonoBehaviour
     // State
     private bool isShooting = false;
     private bool isCurrentShotPerfect = false;
+    private Vector3 shotOrigin;
     private Vector3 inCP;
     private Vector3 outCP;
     private Vector3 inCPImperfect;
     private Vector3 outCPImperfect;
-
-    // Imperfect shot state - stored so gizmos can draw the same point used in the shot
     private Vector3 currentRimEdgePoint;
-    private Vector3 currentImperfectDirectionToPlayer;
-    private bool hasImperfectShotData = false;
+    private Vector3 currentRimEdgeDirection;
 
     // Balls that the controller will shoot - Gotten from the pool
     private Rigidbody ballRb;
@@ -66,103 +63,81 @@ public class BallShooterController : MonoBehaviour
         return ballTransform;
     }
 
-    // -- Perfect Shot Logic --
-
-    private void CalculateControlPoints()
+    private void CalculateControlPoints(Vector3 inOffset, Vector3 outOffset, out Vector3 inCP, out Vector3 outCP)
     {
         Vector3 flatDirection = (rimTransform.position - ballTransform.position);
         flatDirection.y = 0f;
         flatDirection = flatDirection.normalized;
 
-        inCP = ballTransform.position + Vector3.up * inCPOffset.y + flatDirection * inCPOffset.z;
-        outCP = rimTransform.position + Vector3.up * outCPOffset.y + flatDirection * outCPOffset.z;
+        inCP = ballTransform.position + Vector3.up * inOffset.y + flatDirection * inOffset.z;
+        outCP = rimTransform.position + Vector3.up * outOffset.y + flatDirection * outOffset.z;
+    }
+
+    // Common logic for both shots
+    private Vector3 BeginShot(bool isPerfect)
+    {
+        shotOrigin = ballTransform.position;
+        isShooting = true;
+        isCurrentShotPerfect = isPerfect;
+        ballRb.isKinematic = true;
+        OnShotStarted?.Invoke();
+        return ballTransform.position;
+    }
+
+    private void OnShotComplete()
+    {
+        // Re-enable physics
+        EnableBallPhysics();
+
+        isShooting = false;
+
+        OnShotCompleted?.Invoke(isCurrentShotPerfect);
+        Debug.Log("Shot completed. RB Physics are enabled.");
+    }
+
+    private void EnableBallPhysics()
+    {
+        ballRb.isKinematic = false;
+        ballRb.useGravity = true;
     }
 
     public void StartPerfectShot()
     {
-        if (isShooting)
-        {
-            Debug.LogWarning("Already shooting. Cannot start a new shot until the current one is complete.");
-            return;
-        }
+        if (isShooting) { Debug.LogWarning("Already shooting."); return; }
 
-        CalculateControlPoints();
+        CalculateControlPoints(inCPOffset, outCPOffset, out Vector3 cp1, out Vector3 cp2);
 
-        shotOrigin = ballTransform.position; 
+        Vector3 origin = BeginShot(true);
 
-        isShooting = true;
-        isCurrentShotPerfect = true;
-        hasImperfectShotData = false;
-
-        // Disable physics during the shot
-        ballRb.isKinematic = true;
-
-        OnShotStarted?.Invoke();
-
-        Debug.Log("Starting Perfect Shot. RB Physics are disabled.");
-
-        // Second approach using DoVirtual.Float and the CubicBezier formula
-        Vector3 origin = ballTransform.position;
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
-            ballTransform.position = CalculateCubicBezierPoint(
-                t,
-                origin,
-                inCP,
-                outCP,
-                rimTransform.position
-            );
+            ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, rimTransform.position);
         })
         .SetEase(Ease.Linear)
         .OnComplete(OnShotComplete);
     }
 
-    // -- Imperfect Shot Logic --
-    private void CalculateImperfectControlPoints()
-    {
-        Vector3 flatDirection = (rimTransform.position - ballTransform.position);
-        flatDirection.y = 0f;
-        flatDirection = flatDirection.normalized;
-
-        inCPImperfect = ballTransform.position + Vector3.up * inCPOffsetImperfect.y + flatDirection * inCPOffsetImperfect.z;
-        outCPImperfect = rimTransform.position + Vector3.up * outCPOffsetImperfect.y + flatDirection * outCPOffsetImperfect.z;
-    }
 
     public void StartImperfectShot()
     {
-        if (isShooting)
-        {
-            Debug.LogWarning("Already shooting. Cannot start a new shot until the current one is complete.");
-            return;
-        }
+        if (isShooting) { Debug.LogWarning("Already shooting."); return; }
 
-        CalculateImperfectControlPoints();
-        shotOrigin = ballTransform.position;
-        isShooting = true;
-        isCurrentShotPerfect = false;
-
-        ballRb.isKinematic = true;
-
-        OnShotStarted?.Invoke();
-
-        Vector3 origin = ballTransform.position;
-
-        // Random point on the rim circumference
-        currentRimEdgePoint = CalculateRandomRimEdgePoint();
-
-        // Direction from rim edge point back to rim center, for the impulse
-        currentImperfectDirectionToPlayer = (currentRimEdgePoint - rimTransform.position);
-        currentImperfectDirectionToPlayer.y = 0f;
-        currentImperfectDirectionToPlayer = currentImperfectDirectionToPlayer.normalized;
+        CalculateControlPoints(inCPOffsetImperfect, outCPOffsetImperfect, out Vector3 cp1, out Vector3 cp2);
 
         hasImperfectShotData = true;
+        Vector3 origin = BeginShot(false);
+
+        currentRimEdgePoint = CalculateRandomRimEdgePoint();
+        currentRimEdgeDirection = (currentRimEdgePoint - rimTransform.position);
+        currentRimEdgeDirection.y = 0f;
+        currentRimEdgeDirection = currentRimEdgeDirection.normalized;
 
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
-            ballTransform.position = CalculateCubicBezierPoint(t, origin, inCPImperfect, outCPImperfect, currentRimEdgePoint);
+            ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, currentRimEdgePoint);
         })
         .SetEase(Ease.Linear)
-        .OnComplete(() => ApplyRimImpulse(currentImperfectDirectionToPlayer));
+        .OnComplete(() => ApplyRimImpulse(currentRimEdgeDirection));
     }
 
     private Vector3 CalculateRandomRimEdgePoint()
@@ -174,6 +149,7 @@ public class BallShooterController : MonoBehaviour
         return rimEdgePoint;
     }
 
+    // reactivate physics and apply impulse away from the rim edge point to the center of it, with a downward tilt - used by Imp. Shot
     private void ApplyRimImpulse(Vector3 directionToPlayer)
     {
         EnableBallPhysics();
@@ -188,37 +164,6 @@ public class BallShooterController : MonoBehaviour
 
         OnShotComplete();
     }
-
-    // -- Shared Logic --
-
-    private void OnShotComplete()
-    {
-        // Re-enable physics
-        EnableBallPhysics();
-
-        isShooting = false;
-
-        OnShotCompleted?.Invoke(isCurrentShotPerfect);
-
-        Debug.Log("Perfect shot completed. RB Physics are enabled.");
-    }
-
-    // Re-enable physics 
-    private void EnableBallPhysics()
-    {
-        ballRb.isKinematic = false;
-        ballRb.useGravity = true;
-    }
-
-    //public IEnumerator ShootingTest(float shootingDelay)
-    //{
-    //    foreach (var shootingPosition in shootingPositionController.GetCurrentRoundSemicirclePositions())
-    //    {
-    //        ballTransform.position = shootingPosition.WorldPosition + new Vector3(0f, 2f, 0f); // Reset ball position above the parent
-    //        StartPerfectShot();
-    //        yield return new WaitForSeconds(shootingDelay);
-    //    }
-    //}
 
     private void OnDrawGizmos()
     {
@@ -236,7 +181,7 @@ public class BallShooterController : MonoBehaviour
         Vector3 cp1 = origin + Vector3.up * inCPOffset.y + flatDirection * inCPOffset.z;
         Vector3 cp2 = destination + Vector3.up * outCPOffset.y + flatDirection * outCPOffset.z;
 
-        Gizmos.color = gizmoColor;
+        Gizmos.color = Color.yellow;
 
         Vector3 previousPoint = origin;
 
