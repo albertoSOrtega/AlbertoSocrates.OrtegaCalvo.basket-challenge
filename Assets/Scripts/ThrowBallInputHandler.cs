@@ -4,6 +4,9 @@ using UnityEngine.InputSystem.Controls;
 
 public class ThrowBallInputHandler : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private CameraController cameraController;
+
     // Initial configuration with pixels
     [Header("Swipe Configuration")]
     [SerializeField] private float maxSwipeDistance = 500f;
@@ -21,10 +24,36 @@ public class ThrowBallInputHandler : MonoBehaviour
     private float currentShootPower;
     private float swipeTimer;
     private float lastSwipeY;  // only goes up
+    private bool isInputEnabled = false; // Bloqueado hasta que la cámara esté lista
 
     // New Input System device references
     private Touchscreen touchscreen;
     private Mouse mouse;
+
+    private void Awake()
+    {
+        isInputEnabled = false;
+    }
+
+    private void OnEnable()
+    {
+        // Subscribe to device connection/disconnection changes - In case the player plugs in/out a mouse or touchscreen device while the game is running
+        InputSystem.onDeviceChange += OnDeviceChanged;
+        RefreshDevices();
+        cameraController.OnCameraBehindPlayer += EnableInput;
+    }
+
+    private void OnDisable()
+    {
+        InputSystem.onDeviceChange -= OnDeviceChanged;
+        cameraController.OnCameraBehindPlayer -= EnableInput;
+    }
+
+    // Todo: set topo private
+    public void EnableInput()
+    {
+        isInputEnabled = true;
+    }
 
     // Mouse input (PC / Unity Editor)
     private void HandleMouseInput()
@@ -72,6 +101,8 @@ public class ThrowBallInputHandler : MonoBehaviour
     // Called when the user click/taps the screen - saves the starting point
     private void StartTrackingSwipe(Vector2 screenPosition)
     {
+        if (!isInputEnabled) return;
+
         startPosition = screenPosition;
         lastSwipeY = screenPosition.y;
         isTrackingSwipe = true;
@@ -107,6 +138,7 @@ public class ThrowBallInputHandler : MonoBehaviour
 
         if (verticalDelta >= minSwipeDistance)
         {
+            isInputEnabled = false; // Disable input until the camera is behind the player again for the next shot
             Debug.Log($"[ThrowBallInputHandler] Shot released. Power: {currentShootPower:P0}");
             OnShootReleased?.Invoke(currentShootPower);
         }
@@ -117,18 +149,6 @@ public class ThrowBallInputHandler : MonoBehaviour
         }
 
         currentShootPower = 0f;
-    }
-
-    private void OnEnable()
-    {
-        // Subscribe to device connection/disconnection changes - In case the player plugs in/out a mouse or touchscreen device while the game is running
-        InputSystem.onDeviceChange += OnDeviceChanged;
-        RefreshDevices();
-    }
-
-    private void OnDisable()
-    {
-        InputSystem.onDeviceChange -= OnDeviceChanged;
     }
 
     private void OnDeviceChanged(InputDevice device, InputDeviceChange change)

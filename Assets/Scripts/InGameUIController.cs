@@ -60,7 +60,7 @@ public class InGameUIController : MonoBehaviour
         else
         {
             shootText.text = $"You Failed!";
-            ResetAfterShot();
+            ResetAfterShot(false);
         }
         
         shootText.DOFade(0, 2f);
@@ -85,7 +85,7 @@ public class InGameUIController : MonoBehaviour
         shootPowerSlider.value = 0f;
     }
 
-    public void ResetAfterShot()
+    public void ResetAfterShot(bool isPerfectShot)
     {
         ResetSlider();
         UpdateSlider(0f);
