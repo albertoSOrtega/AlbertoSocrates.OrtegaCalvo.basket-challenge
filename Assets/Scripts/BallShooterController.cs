@@ -1,11 +1,13 @@
 ﻿using DG.Tweening;
 using System.Collections;
+using UnityEditor;
 using UnityEngine;
 
 public class BallShooterController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform rimTransform;
+    [SerializeField] private Transform backboardTransform;
     [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
     [SerializeField] private ShootingBarZoneController shootingBarZoneController;
 
@@ -32,6 +34,13 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private float shortShotMinDistanceFromRim = 1f;
     [SerializeField] private float shortShotMaxDistanceFromRim = 2f;
     [SerializeField] private float shortYOffset = -0.5f;
+
+    [Header("Lower Backboard Shot Configuration")]
+    [SerializeField] private float lowerBackboardXMin = 0.7f;
+    [SerializeField] private float lowerBackboardXMax = 0.8f;
+    [SerializeField] private float lowerBackboardYOffset = 0.33f;
+    [SerializeField] private float lowerBackboardZOffset = -0.44f;
+
 
     [Header("Gizmos")]
     public bool showGizmos = true;
@@ -90,6 +99,9 @@ public class BallShooterController : MonoBehaviour
     // Common logic for both shots
     private Vector3 BeginShot(ShotType shotType)
     {
+        // Detach from player so any ongoing DOTween on the player doesn't affect the ball
+        ballTransform.SetParent(null);
+
         shotOrigin = ballTransform.position;
         isShooting = true;
         currentShotType = shotType;
@@ -273,6 +285,83 @@ public class BallShooterController : MonoBehaviour
         OnShotComplete();
     }
 
+    public void StartLowerBackboardShot()
+    {
+        if (isShooting) { Debug.LogWarning("Already shooting."); return; }
+
+        // Detach from player so the DOTween jump doesn't affect the ball
+        ballTransform.SetParent(null);
+
+        shotOrigin = ballTransform.position;
+        isShooting = true;
+        currentShotType = ShotType.LowerBackboard;
+
+        Vector3 target = CalculateLowerBackboardTarget();
+        Vector3 velocity = CalculateParabolicVelocity(shotOrigin, target, shotDuration);
+
+        Vector3 shotDir = (target - shotOrigin).normalized;
+        spinAxis = Vector3.Cross(shotDir, Vector3.up).normalized;
+        ballRb.GetComponent<BallSpinController>().StartSpin(backspinSpeedDegreesPerSecond, spinAxis);
+
+        // Reset Rigidbody manually completely before applying the new velocity
+        EnableBallPhysics();
+        // Now apply our calculated velocity
+        ballRb.velocity = velocity;       
+
+        OnShotStarted?.Invoke();
+
+        StartCoroutine(BackboardShotComplete(shotDuration));
+
+        DebugDrawParabola(shotOrigin, velocity, shotDuration, Color.cyan);
+        Debug.Log($"[LowerBackboard] Origin: {shotOrigin}, Target: {target}, Velocity: {velocity}, T: {shotDuration}");
+    }
+
+    // Given an origin, a target and a flight time, calculates the initial velocity needed
+    // to reach the target in that time under Unity's gravity using projectile motion equations:
+    // target = origin + v0*t + 0.5*g*t^2  →  v0 = (target - origin - 0.5*g*t^2) / t
+    private Vector3 CalculateParabolicVelocity(Vector3 origin, Vector3 target, float flightTime)
+    {
+        Vector3 displacement = target - origin;
+        Vector3 gravityComponent = 0.5f * Physics.gravity * flightTime * flightTime;
+        return (displacement - gravityComponent) / flightTime;
+    }
+
+    private Vector3 CalculateLowerBackboardTarget()
+    {
+        // Depending on which side of the backboard the player is
+        float side = ballTransform.position.x > backboardTransform.position.x ? 1f : -1f;
+        float xOffset = side * Random.Range(lowerBackboardXMin, lowerBackboardXMax);
+        float yOffset = lowerBackboardYOffset;
+
+        return new Vector3(
+            backboardTransform.position.x + xOffset,               // X: lateral offset from center
+            backboardTransform.position.y + lowerBackboardYOffset,  // Y: vertical offset
+            backboardTransform.position.z + lowerBackboardZOffset   // Z: push towards the field to hit the front face
+        );
+    }
+
+    private IEnumerator BackboardShotComplete(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        isShooting = false;
+        OnShotCompleted?.Invoke(currentShotType);
+        Debug.Log($"[BallShooterController] Backboard shot completed: {currentShotType}");
+    }
+
+    // Draws the parabolic trajectory of a shot in the Scene view for debugging purposes. 
+    private void DebugDrawParabola(Vector3 origin, Vector3 v0, float duration, Color color, int steps = 30)
+    {
+        Vector3 prev = origin;
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = duration * i / steps;
+            Vector3 pos = origin + v0 * t + 0.5f * Physics.gravity * t * t;
+            Debug.DrawLine(prev, pos, color, duration + 2f);
+            prev = pos;
+        }
+    }
+
+
     private void OnDrawGizmos()
     {
         if (!showGizmos || ballTransform == null || rimTransform == null) return;
@@ -313,7 +402,7 @@ public class BallShooterController : MonoBehaviour
         Gizmos.DrawLine(destination, cp2);
 
         // --- Imperfect Shot Gizmo (red) - only drawn when shot data is available ---
-        if (hasImperfectShotData)
+        if (hasImperfectShotData && Application.isPlaying)
         {
             Vector3 cp1Imperfect = origin + Vector3.up * inCPOffsetImperfect.y + flatDirection * inCPOffsetImperfect.z;
             Vector3 cp2Imperfect = destination + Vector3.up * outCPOffsetImperfect.y + flatDirection * outCPOffsetImperfect.z;
