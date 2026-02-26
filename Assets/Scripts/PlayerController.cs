@@ -146,8 +146,9 @@ public class PlayerController : MonoBehaviour
                 ballShooterController.StartLowerBackboardShot();
                 break;
             case ShotType.UpperBackboard:
-                throwBallInputHandler.EnableInput();
-                Debug.Log("Imperfect Backboard Shot");
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartUpperBackboardShot();
                 break;
             default:
                 transform.DOLocalJump(transform.position, 1f, 1, 1f);

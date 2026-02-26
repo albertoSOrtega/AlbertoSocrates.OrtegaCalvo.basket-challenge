@@ -10,6 +10,7 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private Transform backboardTransform;
     [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
     [SerializeField] private ShootingBarZoneController shootingBarZoneController;
+    [SerializeField] private Collider securityBarrier;
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
@@ -40,6 +41,13 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private float lowerBackboardXMax = 0.8f;
     [SerializeField] private float lowerBackboardYOffset = 0.33f;
     [SerializeField] private float lowerBackboardZOffset = -0.44f;
+
+    [Header("Upper Backboard Shot Configuration")]
+    //[SerializeField] private float upperBackboardXMin = 0.7f;
+    [SerializeField] private float upperBackboardXMax = 0.8f;
+    [SerializeField] private float upperBackboardYOffset = 0.33f;
+    [SerializeField] private float upperBackboardZOffset = -0.44f;
+    [SerializeField] private float upperBackboardShotTimeMultiplier = 2f;
 
 
     [Header("Gizmos")]
@@ -316,6 +324,40 @@ public class BallShooterController : MonoBehaviour
         Debug.Log($"[LowerBackboard] Origin: {shotOrigin}, Target: {target}, Velocity: {velocity}, T: {shotDuration}");
     }
 
+    public void StartUpperBackboardShot()
+    {
+        if (isShooting) { Debug.LogWarning("Already shooting."); return; }
+
+        // Enable the security barrier to prevent the player to score - extra security measure
+        securityBarrier.enabled = true; 
+
+        // Detach from player so the DOTween jump doesn't affect the ball
+        ballTransform.SetParent(null);
+
+        shotOrigin = ballTransform.position;
+        isShooting = true;
+        currentShotType = ShotType.UpperBackboard;
+
+        Vector3 target = CalculateUpperBackboardTarget();
+        Vector3 velocity = CalculateParabolicVelocity(shotOrigin, target, shotDuration/upperBackboardShotTimeMultiplier);
+
+        Vector3 shotDir = (target - shotOrigin).normalized;
+        spinAxis = Vector3.Cross(shotDir, Vector3.up).normalized;
+        ballRb.GetComponent<BallSpinController>().StartSpin(backspinSpeedDegreesPerSecond, spinAxis);
+
+        // Reset Rigidbody manually completely before applying the new velocity
+        EnableBallPhysics();
+        // Now apply our calculated velocity
+        ballRb.velocity = velocity;
+
+        OnShotStarted?.Invoke();
+
+        StartCoroutine(BackboardShotComplete(shotDuration));
+
+        DebugDrawParabola(shotOrigin, velocity, shotDuration / upperBackboardShotTimeMultiplier, Color.cyan);
+        Debug.Log($"[LowerBackboard] Origin: {shotOrigin}, Target: {target}, Velocity: {velocity}, T: {shotDuration}");
+    }
+
     // Given an origin, a target and a flight time, calculates the initial velocity needed
     // to reach the target in that time under Unity's gravity using projectile motion equations:
     // target = origin + v0*t + 0.5*g*t^2  →  v0 = (target - origin - 0.5*g*t^2) / t
@@ -331,7 +373,6 @@ public class BallShooterController : MonoBehaviour
         // Depending on which side of the backboard the player is
         float side = ballTransform.position.x > backboardTransform.position.x ? 1f : -1f;
         float xOffset = side * Random.Range(lowerBackboardXMin, lowerBackboardXMax);
-        float yOffset = lowerBackboardYOffset;
 
         return new Vector3(
             backboardTransform.position.x + xOffset,               // X: lateral offset from center
@@ -340,10 +381,23 @@ public class BallShooterController : MonoBehaviour
         );
     }
 
+    private Vector3 CalculateUpperBackboardTarget()
+    {
+        // Depending on which side of the backboard the player is
+        float xOffset = Random.Range(-1f * upperBackboardXMax, upperBackboardXMax);
+
+        return new Vector3(
+            backboardTransform.position.x + xOffset,               // X: lateral offset from center
+            backboardTransform.position.y + upperBackboardYOffset,  // Y: vertical offset
+            backboardTransform.position.z + upperBackboardZOffset   // Z: push towards the field to hit the front face
+        );
+    }
+
     private IEnumerator BackboardShotComplete(float delay)
     {
         yield return new WaitForSeconds(delay);
         isShooting = false;
+        securityBarrier.enabled = false;
         OnShotCompleted?.Invoke(currentShotType);
         Debug.Log($"[BallShooterController] Backboard shot completed: {currentShotType}");
     }
