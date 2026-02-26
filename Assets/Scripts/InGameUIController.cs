@@ -12,7 +12,7 @@ public class InGameUIController : MonoBehaviour
     public TextMeshProUGUI shootText;
     public ThrowBallInputHandler throwBallInputHandler;
     public Image perfectZoneImage;
-    public PerfectZoneController perfectZoneController;
+    public ShootingBarZoneController shootingBarZoneController;
     public BallShooterController ballShooterController;
 
     [Header("Perfect Shooting Zone Colors")]
@@ -27,8 +27,8 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnShootReleased += UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled += UIHandleCancelShoot;
 
-        // Suscribe to the eevnts of the PerfectZoneController to initialize the perfect zone rect when randomized
-        perfectZoneController.OnPerfectZoneRandomized += InitializePerfectZoneRect;
+        // Suscribe to the eevnts of the shootingBarZoneController to initialize the perfect zone rect when randomized
+        shootingBarZoneController.OnShootingZonesInitialized += InitializePerfectZoneRect;
 
         // Subscribe to the events of the BallShooterController
         ballShooterController.OnShotCompleted += ResetAfterShot;
@@ -42,8 +42,8 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnShootReleased -= UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
-        // Unsubscribe to the eevnts of the PerfectZoneController
-        perfectZoneController.OnPerfectZoneRandomized -= InitializePerfectZoneRect;
+        // Unsubscribe to the eevnts of the shootingBarZoneController
+        shootingBarZoneController.OnShootingZonesInitialized -= InitializePerfectZoneRect;
 
         // Unsubscribe to the events of the BallShooterController
         ballShooterController.OnShotCompleted -= ResetAfterShot;
@@ -53,14 +53,29 @@ public class InGameUIController : MonoBehaviour
     {
         shootText.DOKill();
         shootText.alpha = 1f; // Reset alpha to fully visible
-        if (perfectZoneController.IsInPerfectZone(shootPower))
+
+        ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
+
+        switch (shotType)
         {
-            shootText.text = $"Shooting with this power: {shootPower}";
-        }
-        else
-        {
-            shootText.text = $"You Failed!";
-            ResetAfterShot(false);
+            case ShotType.Perfect:
+                shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
+                break;
+            case ShotType.Imperfect:
+                shootText.text = $"Shooting Imperfect Shot with this power: {shootPower}";
+                break;
+            case ShotType.Short:
+                shootText.text = $"Short Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
+            case ShotType.PerfectBackboard:
+                shootText.text = $"Other Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
+            case ShotType.ImperfectBackboard:
+                shootText.text = $"Other Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
         }
         
         shootText.DOFade(0, 2f);
@@ -85,7 +100,7 @@ public class InGameUIController : MonoBehaviour
         shootPowerSlider.value = 0f;
     }
 
-    public void ResetAfterShot(bool isPerfectShot)
+    public void ResetAfterShot(ShotType shotType)
     {
         ResetSlider();
         UpdateSlider(0f);
@@ -95,8 +110,8 @@ public class InGameUIController : MonoBehaviour
     {
         // Slider rotated 90º in Z axis, we use width instead of height
         float sliderLength = ((RectTransform)shootPowerSlider.transform).rect.width;
-        float initialPosX = perfectZoneController.perfectZoneStart * sliderLength;
-        float zoneWidth = perfectZoneController.perfectZoneSize * sliderLength;
+        float initialPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
+        float zoneWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
 
         perfectZoneImage.rectTransform.anchoredPosition = new Vector2(initialPosX, 0f);
         perfectZoneImage.rectTransform.sizeDelta = new Vector2(zoneWidth, 0f);
@@ -104,7 +119,7 @@ public class InGameUIController : MonoBehaviour
 
     public void UpdatePerfectZoneColor(float shootPower)
     {
-        if (perfectZoneController.IsInPerfectZone(shootPower))
+        if (shootingBarZoneController.IsInPerfectZone(shootPower))
         {
             perfectZoneImage.color = inPerfectZoneColor;
         }

@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour
     // Reference to components
     private ThrowBallInputHandler throwBallInputHandler;
     private BallShooterController ballShooterController;
-    private PerfectZoneController perfectZoneController;
+    private ShootingBarZoneController shootingBarZoneController;
     private ShootingPositionController shootingPositionController;
 
     [Header("Ball Spawn Configuration")]
@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour
     {
         throwBallInputHandler = GetComponent<ThrowBallInputHandler>();
         ballShooterController = GetComponent<BallShooterController>();
-        perfectZoneController = GetComponent<PerfectZoneController>();
+        shootingBarZoneController = GetComponent<ShootingBarZoneController>();
         shootingPositionController = GetComponent<ShootingPositionController>();
     }
 
@@ -44,21 +44,13 @@ public class PlayerController : MonoBehaviour
         shootingPositionController.OnNewRoundGenerated -= SetupPlayerInPosition;
     }
 
+    // Wrapper to pass the information to the PlayerJumpAndShoot coroutine, since the event doesn't receive the shot type directly
     private void HandleShootReleased(float shootPower)
     {
-        if (perfectZoneController.IsInPerfectZone(shootPower))
-        {
-            StartCoroutine(PlayerJumpAndShoot());         
-        }
-        else
-        {
-            Debug.Log("Shot not in perfect zone. No action taken.");
-            // todo: 2point shoot
-            throwBallInputHandler.EnableInput(); 
-        }
+        StartCoroutine(PlayerJumpAndShoot(shootPower));
     }
 
-    private void HandleShotCompleted(bool isPerfectShot)
+    private void HandleShotCompleted(ShotType shotType)
     {
         BallPoolController.instance.ReturnBall(currentBall, 2f);
         currentBall = null;
@@ -119,16 +111,44 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }
 
-    private IEnumerator PlayerJumpAndShoot()
+    private IEnumerator PlayerJumpAndShoot(float shootPower)
     {
-        transform.DOLocalJump(transform.position, 1f, 1, 1f);
-        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
-        ballShooterController.StartPerfectShot();
+        // get the shot type
+        ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
+
+        switch (shotType)
+        {
+            case ShotType.Perfect:
+                // Jump using DoTween
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartPerfectShot(shootPower);
+                break;
+            case ShotType.Imperfect:
+                // Jump using DoTween
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartImperfectShot();
+                break;
+            case ShotType.Short:
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartShortShot(shootPower);
+                Debug.Log("Short Shot.");
+                break;
+            case ShotType.PerfectBackboard:
+                throwBallInputHandler.EnableInput();
+                Debug.Log("Perfect Backboard Shot");
+                break;
+            case ShotType.ImperfectBackboard:
+                throwBallInputHandler.EnableInput();
+                Debug.Log("Imperfect Backboard Shot");
+                break;
+        }
     }
 
     private void Start()
     {
         shootingPositionController.GenerateNewRound();
-        //cameraController.SnapCameraToTarget();
     }
 }

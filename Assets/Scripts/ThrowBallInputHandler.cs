@@ -49,7 +49,17 @@ public class ThrowBallInputHandler : MonoBehaviour
         cameraController.OnCameraBehindPlayer -= EnableInput;
     }
 
-    // Todo: set topo private
+    public float GetMaxSwipeDistance()
+    {
+        return maxSwipeDistance;
+    }
+
+    public float GetMinSwipeDistance()
+    {
+        return minSwipeDistance;
+    }
+
+    //todo: private
     public void EnableInput()
     {
         isInputEnabled = true;
@@ -139,12 +149,12 @@ public class ThrowBallInputHandler : MonoBehaviour
         if (verticalDelta >= minSwipeDistance)
         {
             isInputEnabled = false; // Disable input until the camera is behind the player again for the next shot
-            Debug.Log($"[ThrowBallInputHandler] Shot released. Power: {currentShootPower:P0}");
+            Debug.Log($"[ThrowBallInputHandler] Shot released. Power: {currentShootPower}");
             OnShootReleased?.Invoke(currentShootPower);
         }
         else
         {
-            Debug.Log($"[ThrowBallInputHandler] Swipe cancelled - Not enough power. Power: {currentShootPower:P0}");
+            Debug.Log($"[ThrowBallInputHandler] Swipe cancelled - Not enough power. Power: {currentShootPower}");
             OnSwipeCancelled?.Invoke(currentShootPower);
         }
 
