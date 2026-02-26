@@ -5,11 +5,14 @@ using UnityEngine;
 public class BallShooterController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Transform rimTransform;    
+    [SerializeField] private Transform rimTransform;
+    [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
+    [SerializeField] private ShootingBarZoneController shootingBarZoneController;
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
     [SerializeField] private float backspinSpeedDegreesPerSecond = 720f;
+    [SerializeField] private float perfectShortShotFinalDownImpulse = 2.5f;
 
     [Header("Bezier Curve Parameters Adjustment")]
     [SerializeField] private Vector3 inCPOffset = new Vector3(0f, 4f, 1f);
@@ -23,11 +26,19 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private float rimImpulseDownwardAngle = 25f;
     [SerializeField] private float rimEdgeHeightOffset = 0.4f;
 
+    [Header("Short Shot Configuration")]
+    [SerializeField] private Vector3 inCPOffsetShort= new Vector3(0f, 3f, 1f);
+    [SerializeField] private Vector3 outCPOffsetShort = new Vector3(0f, 2f, -1f);
+    [SerializeField] private float shortShotMinDistanceFromRim = 1f;
+    [SerializeField] private float shortShotMaxDistanceFromRim = 2f;
+    [SerializeField] private float shortYOffset = -0.5f;
+
     [Header("Gizmos")]
     public bool showGizmos = true;
     public int gizmoResolution = 20;
     public float gizmoSphereRadius = 0.05f;
     private bool hasImperfectShotData = false; // Control variable for the Gizmos
+    private bool hasShortShotData = false; // Control variable for the Gizmos
 
     // Events
     public event System.Action OnShotStarted;
@@ -44,6 +55,7 @@ public class BallShooterController : MonoBehaviour
     private Vector3 currentRimEdgePoint;
     private Vector3 currentRimEdgeDirection;
     private Vector3 spinAxis;
+    private Vector3 currentShortShotTarget; // for gizmos
 
     // Balls that the controller will shoot - Gotten from the pool
     private Rigidbody ballRb;
@@ -121,29 +133,97 @@ public class BallShooterController : MonoBehaviour
 
     // Starts the perfect shot by calculating control points, then animating the ball along the Bezier curve to the rim position.
     // On completion, it calls OnShotComplete to re-enable physics and notify listeners.
-    public void StartPerfectShot()
+    public void StartPerfectShot(float shootPower)
     {
+        PerformPerfectShortShotLogic(ShotType.Perfect, shootPower);
+    }
+
+    public void StartShortShot(float shootPower)
+    {
+        PerformPerfectShortShotLogic(ShotType.Short, shootPower);
+    }
+
+    // Since Perfect and Short shots share the same logic except for the control points and target position,
+    // this function handles both by taking the shot type as a parameter.
+    public void PerformPerfectShortShotLogic(ShotType shotType, float shootPower)
+    {
+        // Reset gizmo Data for Imperfect Shot since we are starting a new shot that is not imperfect. This way, the
+        hasImperfectShotData = false;
+
         if (isShooting) { Debug.LogWarning("Already shooting."); return; }
 
-        CalculateControlPoints(inCPOffset, outCPOffset, out Vector3 cp1, out Vector3 cp2);
+        Vector3 cp1;
+        Vector3 cp2;
+        Vector3 targetPosition;
 
-        Vector3 origin = BeginShot(ShotType.Perfect);
+        if (shotType == ShotType.Perfect)
+        {
+            CalculateControlPoints(inCPOffset, outCPOffset, out cp1, out cp2);
+            targetPosition = rimTransform.position;
+            hasShortShotData = false;
+        }
+        else
+        {
+            CalculateControlPoints(inCPOffsetShort, outCPOffsetShort, out cp1, out cp2);
+            targetPosition = CalculateShortTarget(shootPower);
+            currentShortShotTarget = targetPosition; // Store for Gizmos
+            hasShortShotData = true;
+        }
+
+        Vector3 origin = BeginShot(shotType);
 
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
-            ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, rimTransform.position);
+            ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, targetPosition);
 
             // Ball backspin
             ballTransform.Rotate(spinAxis, backspinSpeedDegreesPerSecond * Time.deltaTime, Space.World);
         })
         .SetEase(Ease.Linear)
-        .OnComplete(OnShotComplete);
+        .OnComplete(() => { EnableBallPhysics(); ballRb.AddForce((Vector3.zero - ballTransform.position).normalized * perfectShortShotFinalDownImpulse, ForceMode.Impulse); OnShotComplete();  });
+    }
+
+    // Calculates the distance from the rim at which a short shot should target based on the shoot power.
+    public Vector3 CalculateShortTarget(float shootPower)
+    {
+        float distanceShort = CalculateShortShotDistance(shootPower);
+
+        // Direction from the rim to the player
+        Vector3 directionToPlayer = transform.position - rimTransform.position;
+        directionToPlayer.y = 0f;
+
+        // 3. Norimalize direction and multiply by distance
+        Vector3 targetPosition = rimTransform.position + directionToPlayer.normalized * distanceShort + new Vector3(0, shortYOffset, 0);
+
+        return targetPosition;
+    }
+
+    // Calculates the distance from the rim at which a short shot should target based on the shoot power.
+    public float CalculateShortShotDistance(float shootPower)
+    {
+        // Power low limit (minSwipe / maxSwipe)
+        float minPower = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+        float maxPower = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;
+
+        // Normalize shootPower 0 y 1
+        // If shootPower is minPower, t will be 0.If its 1, t will be 1.
+        float t = Mathf.InverseLerp(minPower, maxPower, shootPower);
+
+        // Invert t so that max power means closer to the rim
+        t = 1 - t;
+
+        // Interpolate in the Distance Range
+        float finalDistance = Mathf.Lerp(shortShotMinDistanceFromRim, shortShotMaxDistanceFromRim, t);
+
+        return finalDistance;
     }
 
     // Starts the imperfect shot by calculating control points, then animating the ball along a Bezier curve to a random point on the rim edge.
     // On completion, it applies an impulse to the ball away from the rim edge point and notify listeners in the function
     public void StartImperfectShot()
     {
+        hasShortShotData = false;
+
         if (isShooting) { Debug.LogWarning("Already shooting."); return; }
 
         CalculateControlPoints(inCPOffsetImperfect, outCPOffsetImperfect, out Vector3 cp1, out Vector3 cp2);
@@ -232,29 +312,61 @@ public class BallShooterController : MonoBehaviour
         Gizmos.DrawLine(destination, cp2);
 
         // --- Imperfect Shot Gizmo (red) - only drawn when shot data is available ---
-        if (!hasImperfectShotData) return;
-
-        Vector3 cp1Imperfect = origin + Vector3.up * inCPOffsetImperfect.y + flatDirection * inCPOffsetImperfect.z;
-        Vector3 cp2Imperfect = destination + Vector3.up * outCPOffsetImperfect.y + flatDirection * outCPOffsetImperfect.z;
-
-        Gizmos.color = Color.red;
-        previousPoint = origin;
-        for (int i = 1; i <= gizmoResolution; i++)
+        if (hasImperfectShotData)
         {
-            float t = i / (float)gizmoResolution;
-            Vector3 point = CalculateCubicBezierPoint(t, origin, cp1Imperfect, cp2Imperfect, currentRimEdgePoint);
-            Gizmos.DrawLine(previousPoint, point);
-            Gizmos.DrawSphere(point, gizmoSphereRadius);
-            previousPoint = point;
+            Vector3 cp1Imperfect = origin + Vector3.up * inCPOffsetImperfect.y + flatDirection * inCPOffsetImperfect.z;
+            Vector3 cp2Imperfect = destination + Vector3.up * outCPOffsetImperfect.y + flatDirection * outCPOffsetImperfect.z;
+
+            Gizmos.color = Color.red;
+            previousPoint = origin;
+            for (int i = 1; i <= gizmoResolution; i++)
+            {
+                float t = i / (float)gizmoResolution;
+                Vector3 point = CalculateCubicBezierPoint(t, origin, cp1Imperfect, cp2Imperfect, currentRimEdgePoint);
+                Gizmos.DrawLine(previousPoint, point);
+                Gizmos.DrawSphere(point, gizmoSphereRadius);
+                previousPoint = point;
+            }
+
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(cp1Imperfect, gizmoSphereRadius * 2f);
+            Gizmos.DrawSphere(cp2Imperfect, gizmoSphereRadius * 2f);
+            Gizmos.DrawLine(origin, cp1Imperfect);
+            Gizmos.DrawLine(currentRimEdgePoint, cp2Imperfect);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(currentRimEdgePoint, gizmoSphereRadius * 3f);
         }
 
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawSphere(cp1Imperfect, gizmoSphereRadius * 2f);
-        Gizmos.DrawSphere(cp2Imperfect, gizmoSphereRadius * 2f);
-        Gizmos.DrawLine(origin, cp1Imperfect);
-        Gizmos.DrawLine(currentRimEdgePoint, cp2Imperfect);
+        if (hasShortShotData && Application.isPlaying)
+        {
+            // Calculamos el destino específico para el tiro corto (usando un valor de ejemplo o el último procesado)
+            // Nota: En Gizmos, si no estamos en Play Mode, usamos un power de 0.5f para previsualizar
+            Vector3 shortTarget = currentShortShotTarget;
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(currentRimEdgePoint, gizmoSphereRadius * 3f);
+            // Recalculamos flatDirection hacia el nuevo target
+            Vector3 shortFlatDir = (shortTarget - origin);
+            shortFlatDir.y = 0f;
+            shortFlatDir = shortFlatDir.normalized;
+
+            Vector3 cp1Short = origin + Vector3.up * inCPOffsetShort.y + shortFlatDir * inCPOffsetShort.z;
+            Vector3 cp2Short = shortTarget + Vector3.up * outCPOffsetShort.y + shortFlatDir * outCPOffsetShort.z;
+
+            Gizmos.color = Color.cyan;
+            previousPoint = origin;
+            for (int i = 1; i <= gizmoResolution; i++)
+            {
+                float t = i / (float)gizmoResolution;
+                Vector3 point = CalculateCubicBezierPoint(t, origin, cp1Short, cp2Short, shortTarget);
+                Gizmos.DrawLine(previousPoint, point);
+                previousPoint = point;
+            }
+
+            // Dibujar Target y Control Points del Short Shot
+            Gizmos.DrawWireSphere(shortTarget, gizmoSphereRadius * 2f);
+            Gizmos.color = new Color(0, 1, 1, 0.5f); // Cyan semitransparente para líneas de control
+            Gizmos.DrawLine(origin, cp1Short);
+            Gizmos.DrawLine(shortTarget, cp2Short);
+        }
     }
 }

@@ -122,7 +122,7 @@ public class PlayerController : MonoBehaviour
                 // Jump using DoTween
                 transform.DOLocalJump(transform.position, 1f, 1, 1f);
                 yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
-                ballShooterController.StartPerfectShot();
+                ballShooterController.StartPerfectShot(shootPower);
                 break;
             case ShotType.Imperfect:
                 // Jump using DoTween
@@ -131,7 +131,9 @@ public class PlayerController : MonoBehaviour
                 ballShooterController.StartImperfectShot();
                 break;
             case ShotType.Short:
-                throwBallInputHandler.EnableInput();
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartShortShot(shootPower);
                 Debug.Log("Short Shot.");
                 break;
             case ShotType.PerfectBackboard:
