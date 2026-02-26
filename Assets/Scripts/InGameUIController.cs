@@ -12,12 +12,15 @@ public class InGameUIController : MonoBehaviour
     public TextMeshProUGUI shootText;
     public ThrowBallInputHandler throwBallInputHandler;
     public Image perfectZoneImage;
+    public Image backboardZoneImage;
     public ShootingBarZoneController shootingBarZoneController;
     public BallShooterController ballShooterController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
     public Color inPerfectZoneColor = new Color(0.3f, 0.75f, 0f, 1f);
+    public Color normalBackboardZoneColor = new Color(0.7f, 0f, 1f, 1f);
+    public Color inBackboardZoneColor = new Color(1f, 0f, 0.7f, 1f);
 
     private void OnEnable()
     {
@@ -28,7 +31,7 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnSwipeCancelled += UIHandleCancelShoot;
 
         // Suscribe to the eevnts of the shootingBarZoneController to initialize the perfect zone rect when randomized
-        shootingBarZoneController.OnShootingZonesInitialized += InitializePerfectZoneRect;
+        shootingBarZoneController.OnShootingZonesInitialized += InitializeZoneRects;
 
         // Subscribe to the events of the BallShooterController
         ballShooterController.OnShotCompleted += ResetAfterShot;
@@ -43,7 +46,7 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
         // Unsubscribe to the eevnts of the shootingBarZoneController
-        shootingBarZoneController.OnShootingZonesInitialized -= InitializePerfectZoneRect;
+        shootingBarZoneController.OnShootingZonesInitialized -= InitializeZoneRects;
 
         // Unsubscribe to the events of the BallShooterController
         ballShooterController.OnShotCompleted -= ResetAfterShot;
@@ -65,16 +68,23 @@ public class InGameUIController : MonoBehaviour
                 shootText.text = $"Shooting Imperfect Shot with this power: {shootPower}";
                 break;
             case ShotType.Short:
-                shootText.text = $"Short Shot, You Failed!";
+                shootText.text = $"Short Shot, You Failed! {shootPower}";
                 ResetAfterShot(shotType);
                 break;
             case ShotType.PerfectBackboard:
-                shootText.text = $"Other Shot, You Failed!";
+                shootText.text = $"Perfect backboard shot! {shootPower}";
                 ResetAfterShot(shotType);
                 break;
-            case ShotType.ImperfectBackboard:
-                shootText.text = $"Other Shot, You Failed!";
+            case ShotType.LowerBackboard:
+                shootText.text = $"Lower backboad shot, you failed {shootPower}";
                 ResetAfterShot(shotType);
+                break;
+            case ShotType.UpperBackboard:
+                shootText.text = $"upper backboard shot, you failed {shootPower}";
+                ResetAfterShot(shotType);
+                break;
+            default:
+                shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
                 break;
         }
         
@@ -92,7 +102,7 @@ public class InGameUIController : MonoBehaviour
     public void UpdateSlider(float shootPower)
     {
         shootPowerSlider.value = shootPower;
-        UpdatePerfectZoneColor(shootPower);
+        UpdateZoneColors(shootPower);
     }
 
     public void ResetSlider()
@@ -106,27 +116,35 @@ public class InGameUIController : MonoBehaviour
         UpdateSlider(0f);
     }
 
-    public void InitializePerfectZoneRect()
+    // Positions and sizes both zone images based on the computed boundaries
+    public void InitializeZoneRects()
     {
-        // Slider rotated 90º in Z axis, we use width instead of height
+        // Slider is rotated 90º in Z, so we use rect.width as the bar length
         float sliderLength = ((RectTransform)shootPowerSlider.transform).rect.width;
-        float initialPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
-        float zoneWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
 
-        perfectZoneImage.rectTransform.anchoredPosition = new Vector2(initialPosX, 0f);
-        perfectZoneImage.rectTransform.sizeDelta = new Vector2(zoneWidth, 0f);
+        // Perfect zone
+        float perfectPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
+        float perfectWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
+        perfectZoneImage.rectTransform.anchoredPosition = new Vector2(perfectPosX, 0f);
+        perfectZoneImage.rectTransform.sizeDelta = new Vector2(perfectWidth, 0f);
+
+        // Backboard zone
+        float backboardPosX = shootingBarZoneController.backboardStart * sliderLength;
+        float backboardWidth = shootingBarZoneController.backboardZoneSize * sliderLength;
+        backboardZoneImage.rectTransform.anchoredPosition = new Vector2(backboardPosX, 0f);
+        backboardZoneImage.rectTransform.sizeDelta = new Vector2(backboardWidth, 0f);
     }
 
-    public void UpdatePerfectZoneColor(float shootPower)
+    // Updates both zone image colors independently and always resets the inactive one
+    public void UpdateZoneColors(float shootPower)
     {
-        if (shootingBarZoneController.IsInPerfectZone(shootPower))
-        {
-            perfectZoneImage.color = inPerfectZoneColor;
-        }
-        else
-        {
-            perfectZoneImage.color = normalPerfectZoneColor;
-        }
+        perfectZoneImage.color = shootingBarZoneController.IsInPerfectZone(shootPower)
+            ? inPerfectZoneColor
+            : normalPerfectZoneColor;
+
+        backboardZoneImage.color = shootingBarZoneController.IsInBackboardZone(shootPower)
+            ? inBackboardZoneColor
+            : normalBackboardZoneColor;
     }
 
     // Start is called before the first frame update
