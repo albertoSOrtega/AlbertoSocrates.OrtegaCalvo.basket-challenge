@@ -171,13 +171,14 @@ public class BallShooterController : MonoBehaviour
         }
 
         Vector3 origin = BeginShot(shotType);
+        ballTransform.GetComponent<BallSpinController>().StartSpin(backspinSpeedDegreesPerSecond, spinAxis);
 
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
             ballTransform.position = CalculateCubicBezierPoint(t, origin, cp1, cp2, targetPosition);
 
             // Ball backspin
-            ballTransform.Rotate(spinAxis, backspinSpeedDegreesPerSecond * Time.deltaTime, Space.World);
+            //ballTransform.Rotate(spinAxis, backspinSpeedDegreesPerSecond * Time.deltaTime, Space.World);
         })
         .SetEase(Ease.Linear)
         .OnComplete(() => { EnableBallPhysics(); ballRb.AddForce((Vector3.zero - ballTransform.position).normalized * perfectShortShotFinalDownImpulse, ForceMode.Impulse); OnShotComplete();  });
