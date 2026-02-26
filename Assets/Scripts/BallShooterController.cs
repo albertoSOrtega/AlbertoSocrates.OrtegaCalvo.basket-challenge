@@ -31,11 +31,11 @@ public class BallShooterController : MonoBehaviour
 
     // Events
     public event System.Action OnShotStarted;
-    public event System.Action<bool> OnShotCompleted;
+    public event System.Action<ShotType> OnShotCompleted;
 
     // State
     private bool isShooting = false;
-    private bool isCurrentShotPerfect = false;
+    private ShotType currentShotType;
     private Vector3 shotOrigin;
     private Vector3 inCP;
     private Vector3 outCP;
@@ -76,11 +76,11 @@ public class BallShooterController : MonoBehaviour
     }
 
     // Common logic for both shots
-    private Vector3 BeginShot(bool isPerfect)
+    private Vector3 BeginShot(ShotType shotType)
     {
         shotOrigin = ballTransform.position;
         isShooting = true;
-        isCurrentShotPerfect = isPerfect;
+        currentShotType = shotType;
         ballRb.isKinematic = true;
 
         // Backspin axis (horizontal, perpendicular to shot)
@@ -98,7 +98,7 @@ public class BallShooterController : MonoBehaviour
 
         isShooting = false;
 
-        OnShotCompleted?.Invoke(isCurrentShotPerfect);
+        OnShotCompleted?.Invoke(currentShotType);
         Debug.Log("Shot completed. RB Physics are enabled.");
     }
 
@@ -127,7 +127,7 @@ public class BallShooterController : MonoBehaviour
 
         CalculateControlPoints(inCPOffset, outCPOffset, out Vector3 cp1, out Vector3 cp2);
 
-        Vector3 origin = BeginShot(true);
+        Vector3 origin = BeginShot(ShotType.Perfect);
 
         DOVirtual.Float(0f, 1f, shotDuration, t =>
         {
@@ -149,7 +149,7 @@ public class BallShooterController : MonoBehaviour
         CalculateControlPoints(inCPOffsetImperfect, outCPOffsetImperfect, out Vector3 cp1, out Vector3 cp2);
 
         hasImperfectShotData = true;
-        Vector3 origin = BeginShot(false);
+        Vector3 origin = BeginShot(ShotType.Imperfect);
 
         currentRimEdgePoint = CalculateRandomRimEdgePoint();
         currentRimEdgeDirection = (currentRimEdgePoint - rimTransform.position);

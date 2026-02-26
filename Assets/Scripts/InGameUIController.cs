@@ -53,18 +53,29 @@ public class InGameUIController : MonoBehaviour
     {
         shootText.DOKill();
         shootText.alpha = 1f; // Reset alpha to fully visible
-        if (shootingBarZoneController.IsInPerfectZone(shootPower))
+
+        ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
+
+        switch (shotType)
         {
-            shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
-        }
-        else if (shootingBarZoneController.isInImperfectZone(shootPower))
-        {
-            shootText.text = $"Shooting Imperfect Shot with this power: {shootPower}";
-        }
-        else
-        {
-            shootText.text = $"You Failed!";
-            ResetAfterShot(false);
+            case ShotType.Perfect:
+                shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
+                break;
+            case ShotType.Imperfect:
+                shootText.text = $"Shooting Imperfect Shot with this power: {shootPower}";
+                break;
+            case ShotType.Short:
+                shootText.text = $"Short Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
+            case ShotType.PerfectBackboard:
+                shootText.text = $"Other Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
+            case ShotType.ImperfectBackboard:
+                shootText.text = $"Other Shot, You Failed!";
+                ResetAfterShot(shotType);
+                break;
         }
         
         shootText.DOFade(0, 2f);
@@ -89,7 +100,7 @@ public class InGameUIController : MonoBehaviour
         shootPowerSlider.value = 0f;
     }
 
-    public void ResetAfterShot(bool isPerfectShot)
+    public void ResetAfterShot(ShotType shotType)
     {
         ResetSlider();
         UpdateSlider(0f);

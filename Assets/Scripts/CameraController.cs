@@ -102,19 +102,19 @@ public class CameraController : MonoBehaviour
     }
 
     // Calls the Coroutine
-    private void CameraHandleShotCompleted(bool isPerfect)
+    private void CameraHandleShotCompleted(ShotType shotType)
     {
         // We do not follow the ball anymore, we wait until the shake is done to start following the player again
         ballTransform = null;
         currentTarget = null;
 
-        if (isPerfect)
+        if (shotType == ShotType.Perfect)
         {
             TriggerPerfectShotShake();
         }
         else
         {
-            StartCoroutine(TriggerImperfectShotDelay());
+            StartCoroutine(TriggerShotDelay());
         }
     }
 
@@ -133,7 +133,7 @@ public class CameraController : MonoBehaviour
     }
 
     // Shakes the camera using DOTween
-    private IEnumerator TriggerImperfectShotDelay()
+    private IEnumerator TriggerShotDelay()
     {
         yield return new WaitForSeconds(shakeDuration);
         isShaking = false;

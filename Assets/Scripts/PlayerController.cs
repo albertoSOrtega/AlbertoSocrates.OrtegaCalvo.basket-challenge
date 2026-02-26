@@ -44,25 +44,13 @@ public class PlayerController : MonoBehaviour
         shootingPositionController.OnNewRoundGenerated -= SetupPlayerInPosition;
     }
 
+    // Wrapper to pass the information to the PlayerJumpAndShoot coroutine, since the event doesn't receive the shot type directly
     private void HandleShootReleased(float shootPower)
     {
-        if (shootingBarZoneController.IsInPerfectZone(shootPower))
-        {
-            StartCoroutine(PlayerJumpAndShoot(true));         
-        }
-        else if (shootingBarZoneController.isInImperfectZone(shootPower))
-        {
-            StartCoroutine(PlayerJumpAndShoot(false));
-        }
-        else
-        {
-            // Re-enable input immediately since no shot will be taken
-            throwBallInputHandler.EnableInput(); 
-            Debug.Log("Shot failed! No shot will be taken.");
-        }
+        StartCoroutine(PlayerJumpAndShoot(shootPower));
     }
 
-    private void HandleShotCompleted(bool isPerfectShot)
+    private void HandleShotCompleted(ShotType shotType)
     {
         BallPoolController.instance.ReturnBall(currentBall, 2f);
         currentBall = null;
@@ -123,20 +111,38 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }
 
-    private IEnumerator PlayerJumpAndShoot(bool isPerfectShot)
+    private IEnumerator PlayerJumpAndShoot(float shootPower)
     {
-        transform.DOLocalJump(transform.position, 1f, 1, 1f);
-        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+        // get the shot type
+        ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
 
-        if (isPerfectShot)
+        switch (shotType)
         {
-            ballShooterController.StartPerfectShot();
+            case ShotType.Perfect:
+                // Jump using DoTween
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartPerfectShot();
+                break;
+            case ShotType.Imperfect:
+                // Jump using DoTween
+                transform.DOLocalJump(transform.position, 1f, 1, 1f);
+                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+                ballShooterController.StartImperfectShot();
+                break;
+            case ShotType.Short:
+                throwBallInputHandler.EnableInput();
+                Debug.Log("Short Shot.");
+                break;
+            case ShotType.PerfectBackboard:
+                throwBallInputHandler.EnableInput();
+                Debug.Log("Perfect Backboard Shot");
+                break;
+            case ShotType.ImperfectBackboard:
+                throwBallInputHandler.EnableInput();
+                Debug.Log("Imperfect Backboard Shot");
+                break;
         }
-        else
-        {
-            ballShooterController.StartImperfectShot();
-        }
-        
     }
 
     private void Start()

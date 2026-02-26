@@ -1,11 +1,15 @@
+using System.Drawing;
 using UnityEngine;
 using static ShootingPositionController;
+
+public enum ShotType { Perfect, Imperfect, Short, PerfectBackboard, ImperfectBackboard }
 
 public class ShootingBarZoneController : MonoBehaviour
 {
 
     [Header("References")]
     [SerializeField] private ShootingPositionController shootingPositionController;
+    [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
 
     [Header("Perfect Shooting Zone configuration parameters")]
     [Range(0.1f, 0.3f)]
@@ -72,7 +76,7 @@ public class ShootingBarZoneController : MonoBehaviour
         }
     }
 
-    public bool isInImperfectZone(float shootPower)
+    public bool IsInImperfectZone(float shootPower)
     {
         float imperfectZoneStart = perfectZoneStart - imperfectZoneSize;
         float imperfectZoneEnd = perfectZoneEnd + imperfectZoneSize;
@@ -92,6 +96,41 @@ public class ShootingBarZoneController : MonoBehaviour
         else
         {
             return false; 
+        }
+    }
+
+    public bool IsInShortShotZone(float shootPower)
+    {
+        // Minimum shot power for a shot to be done is minSwipeDistance / maxSwipeDistance
+        // Because in TrackingSwipe: currentShootPower = Mathf.Clamp01(verticalDelta / maxSwipeDistance))
+        float minRegisteredPower = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+        float imperfectZoneStart = perfectZoneStart - imperfectZoneSize;
+
+        if (shootPower >= minRegisteredPower && shootPower < imperfectZoneStart)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public ShotType GetShotType(float shootPower)
+    {
+        switch (shootPower)
+        {
+            case float p when IsInPerfectZone(p):
+                return ShotType.Perfect;
+
+            case float p when IsInImperfectZone(p):
+                return ShotType.Imperfect;
+
+            case float p when IsInShortShotZone(p):
+                return ShotType.Short;
+
+            default:
+                return ShotType.PerfectBackboard;
         }
     }
 }
