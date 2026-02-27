@@ -124,9 +124,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c50c7e97c62889740aaa04d0635d1de4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rimBias: 1
-  reboundFlightTime: 0.5
-  backboardDisableTime: 0.2
+  physicsBias: 1
+  reboundFlightTime: 0.4
+  backboardEnableTime: 0.2
+  yOffset: 0.15
 --- !u!54 &3319691553633476649
 Rigidbody:
   m_ObjectHideFlags: 0
