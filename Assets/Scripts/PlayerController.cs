@@ -115,45 +115,28 @@ public class PlayerController : MonoBehaviour
     {
         // get the shot type
         ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
+        transform.DOLocalJump(transform.position, 1f, 1, 1f);
+        yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
 
         switch (shotType)
         {
             case ShotType.Perfect:
-                // Jump using DoTween
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
                 ballShooterController.StartPerfectShot(shootPower);
                 break;
             case ShotType.Imperfect:
-                // Jump using DoTween
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
                 ballShooterController.StartImperfectShot();
                 break;
-            case ShotType.Short:
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
+            case ShotType.Short:    
                 ballShooterController.StartShortShot(shootPower);
-                Debug.Log("Short Shot.");
                 break;
             case ShotType.PerfectBackboard:
-                throwBallInputHandler.EnableInput();
-                Debug.Log("Perfect Backboard Shot");
+                ballShooterController.StartPerfectBackboardShot();
                 break;
             case ShotType.LowerBackboard:
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
                 ballShooterController.StartLowerBackboardShot();
                 break;
             case ShotType.UpperBackboard:
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
                 ballShooterController.StartUpperBackboardShot();
-                break;
-            default:
-                transform.DOLocalJump(transform.position, 1f, 1, 1f);
-                yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
-                ballShooterController.StartPerfectShot(shootPower);
                 break;
         }
     }

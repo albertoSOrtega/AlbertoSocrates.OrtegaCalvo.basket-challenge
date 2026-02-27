@@ -11,6 +11,7 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
     [SerializeField] private ShootingBarZoneController shootingBarZoneController;
     [SerializeField] private Collider securityBarrier;
+    [SerializeField] private PhysicMaterial ballPhysicMaterial;
 
     [Header("Shot Configuration")]
     [SerializeField] private float shotDuration = 2f;
@@ -48,6 +49,11 @@ public class BallShooterController : MonoBehaviour
     [SerializeField] private float upperBackboardYOffset = 0.33f;
     [SerializeField] private float upperBackboardZOffset = -0.44f;
     [SerializeField] private float upperBackboardShotTimeMultiplier = 2f;
+
+    [Header("Perfect Backboard Shot Configuration")]
+    [SerializeField] private float perfectBackboardFlightTimeMultiplier = 1.0f;
+    [SerializeField] private float perfectBackboardYOffset = 0.1f; // Slightly above rim height on the square
+    [SerializeField] private float perfectBackboardZOffset = -0.44f; // Same Z offset as other backboard shots
 
 
     [Header("Gizmos")]
@@ -334,6 +340,9 @@ public class BallShooterController : MonoBehaviour
         // Detach from player so the DOTween jump doesn't affect the ball
         ballTransform.SetParent(null);
 
+        // changes the bounce combine logic of the ball's physic material
+        ballPhysicMaterial.bounceCombine = PhysicMaterialCombine.Maximum;
+
         shotOrigin = ballTransform.position;
         isShooting = true;
         currentShotType = ShotType.UpperBackboard;
@@ -398,6 +407,7 @@ public class BallShooterController : MonoBehaviour
         yield return new WaitForSeconds(delay);
         isShooting = false;
         securityBarrier.enabled = false;
+        ballPhysicMaterial.bounceCombine = PhysicMaterialCombine.Average;
         OnShotCompleted?.Invoke(currentShotType);
         Debug.Log($"[BallShooterController] Backboard shot completed: {currentShotType}");
     }
@@ -415,6 +425,72 @@ public class BallShooterController : MonoBehaviour
         }
     }
 
+    public void StartPerfectBackboardShot()
+    {
+        if (isShooting) { Debug.LogWarning("Already shooting."); return; }
+
+        // Detach from player so the DOTween jump doesn't affect the ball
+        ballTransform.SetParent(null);
+
+        shotOrigin = ballTransform.position;
+        isShooting = true;
+        currentShotType = ShotType.PerfectBackboard;
+
+        // Configure the collision handler on the ball before the shot
+        BackboardCollisionController ballCollisionHandler = ballTransform.GetComponent<BackboardCollisionController>();
+        ballCollisionHandler.SetPerfectBackboardShot(true);
+        ballCollisionHandler.DisableBackboardCollider(); 
+        ballCollisionHandler.ResetRebound();
+
+        // Calculate the rebound point using the law of reflection
+        Vector3 target = CalculatePerfectBackboardTarget();
+        Vector3 velocity = CalculateParabolicVelocity(shotOrigin, target, shotDuration / perfectBackboardFlightTimeMultiplier);
+
+        Vector3 shotDir = (target - shotOrigin).normalized;
+        spinAxis = Vector3.Cross(shotDir, Vector3.up).normalized;
+        ballTransform.GetComponent<BallSpinController>().StartSpin(backspinSpeedDegreesPerSecond, spinAxis);
+
+        EnableBallPhysics();
+        ballRb.velocity = velocity;
+
+        OnShotStarted?.Invoke();
+
+        StartCoroutine(BackboardShotComplete(shotDuration)); // Extra time for the rebound to complete
+
+        DebugDrawParabola(shotOrigin, velocity, shotDuration / perfectBackboardFlightTimeMultiplier, Color.green);
+        Debug.Log($"[PerfectBackboard] Origin: {shotOrigin}, Target: {target}, Velocity: {velocity}");
+    }
+
+    private Vector3 CalculatePerfectBackboardTarget()
+    {
+        // Calculate Z position in the backboard plane with the correct offset
+        float backboardZ = backboardTransform.position.z + perfectBackboardZOffset;
+
+        // Reflect the rim across the backboard plane to find the geometrically correct rebound point. Virtual reflection to ensure
+        // angle of incidence = angle of reflection towards the rim (Z axis). This allows us to not have to calculate the entrance angle
+        // in this point
+        // Formula: P'_z = Z_plane - (P_z - Z_plane) = 2*Z_plane - P_z
+        Vector3 rimReflected = rimTransform.position;
+        rimReflected.z = 2f * backboardZ - rimTransform.position.z;
+
+        // Using linear interpolation (Simple rule of three), we calculate the percentage that
+        // the ball travels in Z to reach the backboard. When will the ball collide with the backboard plane (Z = backboardZ) 
+        float distanceZ = rimReflected.z - shotOrigin.z;
+        float t = (backboardZ - shotOrigin.z) / distanceZ;
+
+        // We calculate the final collision point
+
+        // X is calculated proportionally, to find the displacement in the X axis
+        float targetX = shotOrigin.x + t * (rimReflected.x - shotOrigin.x);
+
+        // We set the Y offset to be slightly above the rim height, to ensure the ball hits the backboard surface and not below the rim. 
+        // This is an artificial adjustment to ensure the shot is visually satisfying and doesn't rely on perfect physics collision at the rim height
+        float targetY = rimTransform.position.y + perfectBackboardYOffset;
+
+        Vector3 reboundPoint = new Vector3(targetX, targetY, backboardZ);
+
+        return reboundPoint;
+    }
 
     private void OnDrawGizmos()
     {
