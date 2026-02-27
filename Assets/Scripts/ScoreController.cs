@@ -57,4 +57,10 @@ public class ScoreController : MonoBehaviour
                 return 0;
         }
     }
+
+    public void SetBackboardBonus(int bonus)
+    {
+        currentBackboardBonus = bonus;
+        Debug.Log($"[ScoreController] Backboard bonus set to: +{bonus}");
+    }
 }
