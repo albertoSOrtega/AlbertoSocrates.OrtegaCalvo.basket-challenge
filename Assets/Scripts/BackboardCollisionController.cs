@@ -50,9 +50,17 @@ public class BackboardCollisionController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!other.CompareTag("BackboardTrigger"))
+        {
+            return;
+        }
+        else
+        {
+            BackboardVisualFeedbackController.instance.TriggerHitFlash();
+            Debug.Log("[Trigger] Collision detected with the backboard");
+        }
         if (!isPerfectBackboardShot || hasRebounded) return;
-        if (!other.CompareTag("BackboardTrigger")) return;
-
+        
         hasRebounded = true;
 
         // Get closest point on the backboard to the ball's position
