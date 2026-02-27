@@ -113,8 +113,10 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator PlayerJumpAndShoot(float shootPower)
     {
-        // get the shot type
+        // get the shot type and set up the shotType in the ball
         ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
+        currentBall.GetComponent<BallController>().CurrentShotType = shotType;
+
         transform.DOLocalJump(transform.position, 1f, 1, 1f);
         yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak
 
