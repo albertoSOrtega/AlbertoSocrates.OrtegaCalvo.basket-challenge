@@ -20,10 +20,10 @@ public class ShootingPositionController : MonoBehaviour
     [SerializeField] private float firstShotMinAngle = 10f;
     [Range(15, 20)]
     [SerializeField] private float firstShotMaxAngle = 20f;
-    [Range(65, 70)]
-    [SerializeField] private float lastShotMinAngle = 70f;
-    [Range(75, 80)]
-    [SerializeField] private float lastShotMaxAngle = 80f;
+    [Range(40, 45)]
+    [SerializeField] private float lastShotMinAngle = 45f;
+    [Range(50, 55)]
+    [SerializeField] private float lastShotMaxAngle = 55f;
 
     [Header("Gizmos")]
     [SerializeField] private bool showGizmos = true;
