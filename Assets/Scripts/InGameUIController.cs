@@ -7,14 +7,20 @@ using UnityEngine.UI;
 
 public class InGameUIController : MonoBehaviour
 {
-    [Header("References")]
+    [Header("UI References")]
     public Slider shootPowerSlider;
     public TextMeshProUGUI shootText;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI timerText;
     public ThrowBallInputHandler throwBallInputHandler;
     public Image perfectZoneImage;
     public Image backboardZoneImage;
+
+    [Header("Controller References")]
     public ShootingBarZoneController shootingBarZoneController;
     public BallShooterController ballShooterController;
+    public ScoreController scoreController;
+    public GameTimerController gameTimerController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -35,6 +41,12 @@ public class InGameUIController : MonoBehaviour
 
         // Subscribe to the events of the BallShooterController
         ballShooterController.OnShotCompleted += ResetAfterShot;
+
+        // Subscribe to the events of the ScoreController
+        scoreController.OnScoreUpdated += UpdateScore;
+
+        // Subscribe to the events of the GameTimerController
+        gameTimerController.OnTimerTick += UpdateTimer;
     }
 
     private void OnDisable()
@@ -145,6 +157,16 @@ public class InGameUIController : MonoBehaviour
         backboardZoneImage.color = shootingBarZoneController.IsInBackboardZone(shootPower)
             ? inBackboardZoneColor
             : normalBackboardZoneColor;
+    }
+
+    public void UpdateScore(int PlayerScore, int CPUScore)
+    {
+        scoreText.text = $"Score\n{PlayerScore}";
+    }
+
+    public void UpdateTimer(float currentTime)
+    {
+        timerText.text = $"{currentTime:0.00}s";
     }
 
     // Start is called before the first frame update
