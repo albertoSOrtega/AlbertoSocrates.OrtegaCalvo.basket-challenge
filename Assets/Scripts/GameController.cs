@@ -15,6 +15,7 @@ public class GameController : MonoBehaviour
 
     // State
     private bool isBonusActive = false;
+    private bool isBonusReady = false; // timer fired, waiting for next basket to activate
 
     private void OnEnable()
     {
@@ -38,12 +39,7 @@ public class GameController : MonoBehaviour
 
     private void HandleBonusIntervalStarted()
     {
-        int bonus = backboardBonusValues[UnityEngine.Random.Range(0, backboardBonusValues.Length)];
-        isBonusActive = true;
-        scoreController.SetBackboardBonus(bonus);
-        BackboardVisualFeedbackController.instance.StartBonusGlow(bonus);
-
-        Debug.Log($"[GameController] Bonus activated: +{bonus}");
+        isBonusReady = true;
     }
 
     private void HandleBasketScored(ShotType shotType)
@@ -56,6 +52,22 @@ public class GameController : MonoBehaviour
         {
             ResetBackboardBonus();
         }
+        else if (isBonusReady && !isBonusActive)
+        {
+            ActivateBonus();
+        }
+    }
+
+    private void ActivateBonus()
+    {
+        isBonusReady = false;
+        isBonusActive = true;
+
+        int bonus = backboardBonusValues[UnityEngine.Random.Range(0, backboardBonusValues.Length)];
+        scoreController.SetBackboardBonus(bonus);
+        BackboardVisualFeedbackController.instance.StartBonusGlow(bonus);
+
+        Debug.Log($"[GameController] Bonus activated: +{bonus}");
     }
 
     private void ResetBackboardBonus()
@@ -77,6 +89,8 @@ public class GameController : MonoBehaviour
             isBonusActive = false;
             BackboardVisualFeedbackController.instance.StopBonusGlow();
         }
+
+        isBonusReady = false;
 
         Debug.Log($"[GameController] Match ended! " +
                   $"Player: {scoreController.PlayerScore} | CPU: {scoreController.CpuScore}");
