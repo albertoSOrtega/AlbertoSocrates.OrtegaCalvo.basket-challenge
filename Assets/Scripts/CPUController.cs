@@ -13,6 +13,7 @@ public class CPUController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform rimTransformReference;
+    [SerializeField] private GameController gameController;
 
     [Header("Shooting Timing")]
     [SerializeField] private float shootingRateMin = 2f;
@@ -30,6 +31,9 @@ public class CPUController : MonoBehaviour
         new ShotTypeWeight { shotType = ShotType.UpperBackboard, weight = 0.05f },
     };
 
+    [Header("Backboard bonus - do a perfect shot probability")]
+    [SerializeField][Range(0f, 1f)] private float perfectBackboardBonusProbability = 0.5f;
+
     [Header("Ball Spawn Configuration")]
     [SerializeField] private float ballSpawnForwardDistance = 0.5f;
     [SerializeField] private float cpuY = 1f;
@@ -41,7 +45,8 @@ public class CPUController : MonoBehaviour
     // State
     private GameObject currentBall;
     private bool isShooting = false;
-    private float totalWeight = 0f; // used to niormalize in case the sum of weights is not 1
+    private bool isBackboardBonusActive = false;
+    private float totalWeight = 0f; // used to normalize in case the sum of weights is not 1
 
     private void Awake()
     {
@@ -56,12 +61,27 @@ public class CPUController : MonoBehaviour
         // same subscription logic as PlayerController, but without the input handler since the CPU doesn't receive input events
         shootingPositionController.OnNewRoundGenerated += HandleNewRound;
         ballShooterController.OnShotCompleted += HandleShotCompleted;
+        gameController.OnBackboardBonusActivated += HandleBackboardBonusActivated; 
+        gameController.OnBackboardBonusReset += HandleBackboardBonusReset;         
     }
 
     private void OnDisable()
     {
         shootingPositionController.OnNewRoundGenerated -= HandleNewRound;
         ballShooterController.OnShotCompleted -= HandleShotCompleted;
+        gameController.OnBackboardBonusActivated -= HandleBackboardBonusActivated; 
+        gameController.OnBackboardBonusReset -= HandleBackboardBonusReset;         
+    }
+
+    private void HandleBackboardBonusActivated()
+    {
+        isBackboardBonusActive = true;
+    }
+
+    // NEW
+    private void HandleBackboardBonusReset()
+    {
+        isBackboardBonusActive = false;
     }
 
     // Called by GameController via ShootingPositionController.OnNewRoundGenerated
@@ -101,7 +121,7 @@ public class CPUController : MonoBehaviour
         float waitTime = Random.Range(shootingRateMin, shootingRateMax);
         yield return new WaitForSeconds(waitTime);
 
-        ShotType selectedShot = SelectWeightedShotType();
+        ShotType selectedShot = SelectShotType();
         currentBall.GetComponent<BallController>().CurrentShotType = selectedShot;
 
         // CPU jumps like the player
@@ -109,6 +129,19 @@ public class CPUController : MonoBehaviour
         yield return new WaitForSeconds(0.5f); // Wait for jump peak
 
         ExecuteShot(selectedShot);
+    }
+
+    // If bonus is active, first roll for PerfectBackboard with its dedicated probability.
+    // If the roll fails, fall back to the normal weighted random selection.
+    private ShotType SelectShotType()
+    {
+        if (isBackboardBonusActive && Random.value <= perfectBackboardBonusProbability)
+        {
+            Debug.Log("[CPUController] Bonus roll succeeded — forcing PerfectBackboard.");
+            return ShotType.PerfectBackboard;
+        }
+
+        return SelectWeightedShotType();
     }
 
     private void ExecuteShot(ShotType shotType)

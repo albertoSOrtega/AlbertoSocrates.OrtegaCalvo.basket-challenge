@@ -13,6 +13,10 @@ public class GameController : MonoBehaviour
     [SerializeField] private ShootingPositionController cpuShootingPositionController;
     [SerializeField] private CPUController cpuController;
 
+    // Events
+    public event System.Action OnBackboardBonusActivated;
+    public event System.Action OnBackboardBonusReset;
+
     [Header("Bonus Configuration")]
     [SerializeField] private int[] backboardBonusValues = { 2, 4, 6 };
 
@@ -81,6 +85,9 @@ public class GameController : MonoBehaviour
         scoreController.SetBackboardBonus(bonus);
         BackboardVisualFeedbackController.instance.StartBonusGlow(bonus);
 
+        // Notify CPU so it can adjust its shot selection
+        OnBackboardBonusActivated?.Invoke();
+
         Debug.Log($"[GameController] Bonus activated: +{bonus}");
     }
 
@@ -90,6 +97,9 @@ public class GameController : MonoBehaviour
         scoreController.SetBackboardBonus(0);
         BackboardVisualFeedbackController.instance.StopBonusGlow();
         gameTimerController.ResumeBonusTimer();
+
+        // Notify CPU so it returns to normal shot selection
+        OnBackboardBonusReset?.Invoke();
 
         Debug.Log("[GameController] Reset BackboardBonus, timer resumed.");
     }
