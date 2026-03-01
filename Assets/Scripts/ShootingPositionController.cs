@@ -77,15 +77,6 @@ public class ShootingPositionController : MonoBehaviour
         return currentPositionIndex;
     }
 
-    // Generates a round with random orientation (right or left) and random distances for each semicircle within the configured ranges.
-    public void GenerateNewRound()
-    {
-        bool randomOrientation = Random.value > 0.5f;
-        currentPositionIndex = 0;
-        GenerateAllRoundSemicircles(randomOrientation);
-        OnNewRoundGenerated?.Invoke();
-    }
-
     // Generates a round with a given orientation (right or left) and random distances for each semicircle within the configured ranges.
     public void GenerateNewRound(bool isInitialOrientationRight)
     {

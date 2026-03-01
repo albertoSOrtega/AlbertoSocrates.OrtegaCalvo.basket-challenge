@@ -106,6 +106,10 @@ public class PlayerController : MonoBehaviour
     private void SpawnBall()
     {
         currentBall = BallPoolController.instance.GetBall(GetBallSpawnPosition(), true, transform);
+
+        BallController ballController = currentBall.GetComponent<BallController>();
+        ballController.Owner = GameEntity.Player;
+
         ballShooterController.SetBall(currentBall.transform);
 
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
@@ -143,8 +147,4 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        shootingPositionController.GenerateNewRound();
-    }
 }

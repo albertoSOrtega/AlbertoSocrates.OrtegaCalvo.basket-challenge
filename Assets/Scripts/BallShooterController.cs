@@ -245,6 +245,17 @@ public class BallShooterController : MonoBehaviour
         return finalDistance;
     }
 
+    // Returns the shootPower range [min, max] that maps to the Short Shot zone.
+    // Used by the CPU to generate a valid random power without needing a swipe. Gets the information from the player.
+    public void GetShortShotPowerRange(out float min, out float max)
+    {
+        // Lower bound: minimum registered swipe converted to [0,1] power
+        min = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+
+        // Upper bound: just below the first imperfect zone
+        max = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;
+    }
+
     // Starts the imperfect shot by calculating control points, then animating the ball along a Bezier curve to a random point on the rim edge.
     // On completion, it applies an impulse to the ball away from the rim edge point and notify listeners in the function
     public void StartImperfectShot()
