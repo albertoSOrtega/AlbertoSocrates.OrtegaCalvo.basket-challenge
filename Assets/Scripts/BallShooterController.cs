@@ -229,7 +229,7 @@ public class BallShooterController : MonoBehaviour
     public float CalculateShortShotDistance(float shootPower)
     {
         // Power low limit (minSwipe / maxSwipe)
-        float minPower = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+        float minPower = throwBallInputHandler.GetMinSwipeDistancePx() / throwBallInputHandler.GetMaxSwipeDistancePx();
         float maxPower = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;
 
         // Normalize shootPower 0 y 1
@@ -250,7 +250,7 @@ public class BallShooterController : MonoBehaviour
     public void GetShortShotPowerRange(out float min, out float max)
     {
         // Lower bound: minimum registered swipe converted to [0,1] power
-        min = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+        min = throwBallInputHandler.GetMinSwipeDistancePx() / throwBallInputHandler.GetMaxSwipeDistancePx();
 
         // Upper bound: just below the first imperfect zone
         max = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;

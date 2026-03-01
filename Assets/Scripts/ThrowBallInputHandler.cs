@@ -7,11 +7,29 @@ public class ThrowBallInputHandler : MonoBehaviour
     [Header("References")]
     [SerializeField] private CameraController cameraController;
 
-    // Initial configuration with pixels
-    [Header("Swipe Configuration")]
-    [SerializeField] private float maxSwipeDistance = 500f;
-    [SerializeField] private float minSwipeDistance = 50f;
+    [Header("PC Mouse Swipe Configuration (screen height %)")]
+    [SerializeField][Range(0.1f, 0.6f)] private float maxSwipePcPct = 0.25f; // 25% screen height
+    [SerializeField][Range(0.01f, 0.1f)] private float minSwipePcPct = 0.04f; // 4% screen height
+
+    [Header("Mobile Swipe Configuration (DPI + cm approach)")]
+    [SerializeField] private float maxSwipeDistanceCm = 6f;
+    [SerializeField] private float minSwipeDistanceCm = 0.8f;
+
+    [Header("Mobile Swipe Configuration 2 (screen height %) - Mobile Fallback")]
+    [SerializeField][Range(0.1f, 0.6f)] private float maxSwipeMobilePct = 0.30f;
+    [SerializeField][Range(0.01f, 0.1f)] private float minSwipeMobilePct = 0.04f;
+
+    [Header("Detection Time")]
     [SerializeField] private float maxSwipeTime = 1.5f;
+
+
+#if UNITY_EDITOR
+    [Header("Debug - Editor only, stripped from builds")]
+    [SerializeField] private bool forceMobileInEditor = false;
+    [SerializeField] private bool forceNoDPI = false;
+    [SerializeField] private float editorSimulatedDPI = 460f;
+#endif
+
 
     // Events
     public event System.Action OnSwipeStarted;
@@ -19,12 +37,15 @@ public class ThrowBallInputHandler : MonoBehaviour
     public event System.Action<float> OnShootPowerChanged;
     public event System.Action<float> OnShootReleased;
 
+    // State
+    private float maxSwipeDistancePx;
+    private float minSwipeDistancePx;
     private Vector2 startPosition;
     private bool isTrackingSwipe = false;
     private float currentShootPower;
     private float swipeTimer;
     private float lastSwipeY;  // only goes up
-    private bool isInputEnabled = false; // Bloqueado hasta que la cámara esté lista
+    private bool isInputEnabled = false; // Blocked until the camera is ready
 
     // New Input System device references
     private Touchscreen touchscreen;
@@ -32,7 +53,16 @@ public class ThrowBallInputHandler : MonoBehaviour
 
     private void Awake()
     {
+
+        // Lock orientation per platform
+        #if UNITY_ANDROID || UNITY_IOS
+        Screen.orientation = ScreenOrientation.Portrait;
+        #else
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
+        #endif
+
         isInputEnabled = false;
+        CalculateSwipeDistances();
     }
 
     private void OnEnable()
@@ -49,20 +79,79 @@ public class ThrowBallInputHandler : MonoBehaviour
         cameraController.OnCameraBehindPlayer -= EnableInput;
     }
 
-    public float GetMaxSwipeDistance()
+    public float GetMaxSwipeDistancePx()
     {
-        return maxSwipeDistance;
+        return maxSwipeDistancePx;
     }
 
-    public float GetMinSwipeDistance()
+    public float GetMinSwipeDistancePx()
     {
-        return minSwipeDistance;
+        return minSwipeDistancePx;
     }
 
-    //todo: private
-    public void EnableInput()
+    private void EnableInput()
     {
         isInputEnabled = true;
+    }
+
+    private void CalculateSwipeDistances()
+    {
+        // PC with mouse -> percentage of screen height, more predictable than DPI on desktop
+        if (IsPCWithMouse())
+        {
+            maxSwipeDistancePx = Screen.height * maxSwipePcPct;
+            minSwipeDistancePx = Screen.height * minSwipePcPct;
+
+            Debug.Log($"[ThrowBallInputHandler] PC mode. " +
+                      $"MaxSwipe: {maxSwipePcPct * 100f}% = {maxSwipeDistancePx:F0}px. " +
+                      $"MinSwipe: {minSwipePcPct * 100f}% = {minSwipeDistancePx:F0}px.");
+            return;
+        }
+
+        // Mobile -> DPI approach (physical cm)
+#if UNITY_EDITOR
+        float dpi = forceNoDPI ? 0f : editorSimulatedDPI;
+#else
+        float dpi = Screen.dpi;
+#endif
+        bool dpiAvailable = dpi > 0f;
+
+        if (dpiAvailable)
+        {
+            float pixelsPerCm = dpi / 2.54f;
+            maxSwipeDistancePx = maxSwipeDistanceCm * pixelsPerCm;
+            minSwipeDistancePx = minSwipeDistanceCm * pixelsPerCm;
+
+            Debug.Log($"[ThrowBallInputHandler] Mobile mode. DPI: {dpi:F0}. " +
+                      $"MaxSwipe: {maxSwipeDistanceCm}cm = {maxSwipeDistancePx:F0}px. " +
+                      $"MinSwipe: {minSwipeDistanceCm}cm = {minSwipeDistancePx:F0}px.");
+        }
+        else
+        {
+            // same as pc if dpi not available
+            maxSwipeDistancePx = Screen.height * maxSwipeMobilePct;
+            minSwipeDistancePx = Screen.height * minSwipeMobilePct;
+
+            Debug.LogWarning($"[ThrowBallInputHandler] Mobile DPI unavailable — fallback. " +
+                             $"MaxSwipe: {maxSwipeDistancePx:F0}px. MinSwipe: {minSwipeDistancePx:F0}px.");
+        }
+    }
+
+    // True if running on a desktop platform
+    // Used to select the correct swipe distance calculation.
+    private bool IsPCWithMouse()
+    {
+
+#if UNITY_EDITOR
+        if (forceMobileInEditor) return false;
+#endif
+
+        return Application.platform == RuntimePlatform.WindowsPlayer
+            || Application.platform == RuntimePlatform.WindowsEditor
+            || Application.platform == RuntimePlatform.OSXPlayer
+            || Application.platform == RuntimePlatform.OSXEditor
+            || Application.platform == RuntimePlatform.LinuxPlayer
+            || Application.platform == RuntimePlatform.LinuxEditor;
     }
 
     // Mouse input (PC / Unity Editor)
@@ -133,7 +222,7 @@ public class ThrowBallInputHandler : MonoBehaviour
 
         // Only count positive Y axis
         float verticalDelta = lastSwipeY - startPosition.y;
-        currentShootPower = Mathf.Clamp01(verticalDelta / maxSwipeDistance);
+        currentShootPower = Mathf.Clamp01(verticalDelta / maxSwipeDistancePx);
 
         OnShootPowerChanged?.Invoke(currentShootPower);
     }
@@ -146,7 +235,7 @@ public class ThrowBallInputHandler : MonoBehaviour
 
         float verticalDelta = releasePosition.y - startPosition.y;
 
-        if (verticalDelta >= minSwipeDistance)
+        if (verticalDelta >= minSwipeDistancePx)
         {
             isInputEnabled = false; // Disable input until the camera is behind the player again for the next shot
             Debug.Log($"[ThrowBallInputHandler] Shot released. Power: {currentShootPower}");

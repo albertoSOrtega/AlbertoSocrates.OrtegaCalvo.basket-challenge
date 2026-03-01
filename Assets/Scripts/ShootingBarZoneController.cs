@@ -130,8 +130,8 @@ public class ShootingBarZoneController : MonoBehaviour
 
     public bool IsInShortShotZone(float shootPower)
     {
-        float minRegisteredPower = throwBallInputHandler.GetMinSwipeDistance()
-                                 / throwBallInputHandler.GetMaxSwipeDistance();
+        float minRegisteredPower = throwBallInputHandler.GetMinSwipeDistancePx()
+                                 / throwBallInputHandler.GetMaxSwipeDistancePx();
         float imperfectZone1Start = perfectZoneStart - imperfectZoneSize;
 
         return shootPower >= minRegisteredPower && shootPower < imperfectZone1Start;
