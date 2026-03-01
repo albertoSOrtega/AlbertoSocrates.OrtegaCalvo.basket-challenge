@@ -7,15 +7,23 @@ using UnityEngine.UI;
 
 public class InGameUIController : MonoBehaviour
 {
-    [Header("UI References")]
-    public Slider shootPowerSlider;
-    public TextMeshProUGUI shootText;
-    public TextMeshProUGUI playerScoreText;
-    public TextMeshProUGUI cpuScoreText;
-    public TextMeshProUGUI timerText;
-    public ThrowBallInputHandler throwBallInputHandler;
-    public Image perfectZoneImage;
-    public Image backboardZoneImage;
+    [Header("Landscape UI References")]
+    [SerializeField] private Slider shootPowerSlider_LS;
+    [SerializeField] private TextMeshProUGUI shootText_LS;
+    [SerializeField] private TextMeshProUGUI playerScoreText_LS;
+    [SerializeField] private TextMeshProUGUI cpuScoreText_LS;
+    [SerializeField] private TextMeshProUGUI timerText_LS;
+    [SerializeField] private Image perfectZoneImage_LS;
+    [SerializeField] private Image backboardZoneImage_LS;
+
+    [Header("Portrait UI References")]
+    [SerializeField] private Slider shootPowerSlider_PT;
+    [SerializeField] private TextMeshProUGUI shootText_PT;
+    [SerializeField] private TextMeshProUGUI playerScoreText_PT;
+    [SerializeField] private TextMeshProUGUI cpuScoreText_PT;
+    [SerializeField] private TextMeshProUGUI timerText_PT;
+    [SerializeField] private Image perfectZoneImage_PT;
+    [SerializeField] private Image backboardZoneImage_PT;
 
     [Header("Controller References")]
     public ShootingBarZoneController shootingBarZoneController;
@@ -28,6 +36,29 @@ public class InGameUIController : MonoBehaviour
     public Color inPerfectZoneColor = new Color(0.3f, 0.75f, 0f, 1f);
     public Color normalBackboardZoneColor = new Color(0.7f, 0f, 1f, 1f);
     public Color inBackboardZoneColor = new Color(1f, 0f, 0.7f, 1f);
+
+    // Intern active references (point to the correct orientation ones at runtime)
+    public Slider shootPowerSlider;
+    public TextMeshProUGUI shootText;
+    public TextMeshProUGUI playerScoreText;
+    public TextMeshProUGUI cpuScoreText;
+    public TextMeshProUGUI timerText;
+    public ThrowBallInputHandler throwBallInputHandler;
+    public Image perfectZoneImage;
+    public Image backboardZoneImage;
+
+    private void Awake()
+    {
+        bool isPortrait = Screen.height > Screen.width;
+
+        shootPowerSlider = isPortrait ? shootPowerSlider_PT : shootPowerSlider_LS;
+        shootText = isPortrait ? shootText_PT : shootText_LS;
+        playerScoreText = isPortrait ? playerScoreText_PT : playerScoreText_LS;
+        cpuScoreText = isPortrait ? cpuScoreText_PT : cpuScoreText_LS;
+        timerText = isPortrait ? timerText_PT : timerText_LS;
+        perfectZoneImage = isPortrait ? perfectZoneImage_PT : perfectZoneImage_LS;
+        backboardZoneImage = isPortrait ? backboardZoneImage_PT : backboardZoneImage_LS;
+    }
 
     private void OnEnable()
     {
@@ -132,20 +163,36 @@ public class InGameUIController : MonoBehaviour
     // Positions and sizes both zone images based on the computed boundaries
     public void InitializeZoneRects()
     {
-        // Slider is rotated 90º in Z, so we use rect.width as the bar length
-        float sliderLength = ((RectTransform)shootPowerSlider.transform).rect.width;
+        RectTransform sliderRect = (RectTransform)shootPowerSlider.transform;
+        bool isVertical = sliderRect.rect.height > sliderRect.rect.width;
+        float sliderLength = isVertical ? sliderRect.rect.height : sliderRect.rect.width;
 
-        // Perfect zone
-        float perfectPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
-        float perfectWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
-        perfectZoneImage.rectTransform.anchoredPosition = new Vector2(perfectPosX, 0f);
-        perfectZoneImage.rectTransform.sizeDelta = new Vector2(perfectWidth, 0f);
+        if (isVertical)
+        {
+            // Vertical slider — zones positioned on Y axis
+            float perfectPosY = shootingBarZoneController.perfectZoneStart * sliderLength;
+            float perfectHeight = shootingBarZoneController.perfectZoneSize * sliderLength;
+            perfectZoneImage.rectTransform.anchoredPosition = new Vector2(0f, perfectPosY);
+            perfectZoneImage.rectTransform.sizeDelta = new Vector2(0f, perfectHeight);
 
-        // Backboard zone
-        float backboardPosX = shootingBarZoneController.backboardStart * sliderLength;
-        float backboardWidth = shootingBarZoneController.backboardZoneSize * sliderLength;
-        backboardZoneImage.rectTransform.anchoredPosition = new Vector2(backboardPosX, 0f);
-        backboardZoneImage.rectTransform.sizeDelta = new Vector2(backboardWidth, 0f);
+            float backboardPosY = shootingBarZoneController.backboardStart * sliderLength;
+            float backboardHeight = shootingBarZoneController.backboardZoneSize * sliderLength;
+            backboardZoneImage.rectTransform.anchoredPosition = new Vector2(0f, backboardPosY);
+            backboardZoneImage.rectTransform.sizeDelta = new Vector2(0f, backboardHeight);
+        }
+        else
+        {
+            // Horizontal slider — zones positioned on X axis
+            float perfectPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
+            float perfectWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
+            perfectZoneImage.rectTransform.anchoredPosition = new Vector2(perfectPosX, 0f);
+            perfectZoneImage.rectTransform.sizeDelta = new Vector2(perfectWidth, 0f);
+
+            float backboardPosX = shootingBarZoneController.backboardStart * sliderLength;
+            float backboardWidth = shootingBarZoneController.backboardZoneSize * sliderLength;
+            backboardZoneImage.rectTransform.anchoredPosition = new Vector2(backboardPosX, 0f);
+            backboardZoneImage.rectTransform.sizeDelta = new Vector2(backboardWidth, 0f);
+        }
     }
 
     // Updates both zone image colors independently and always resets the inactive one
