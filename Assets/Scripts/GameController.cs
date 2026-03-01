@@ -9,6 +9,9 @@ public class GameController : MonoBehaviour
     [SerializeField] private ScoreController scoreController;
     [SerializeField] private ThrowBallInputHandler throwBallInputHandler;
     [SerializeField] private BasketballDetectorController basketDetectorController;
+    [SerializeField] private ShootingPositionController playerShootingPositionController;
+    [SerializeField] private ShootingPositionController cpuShootingPositionController;
+    [SerializeField] private CPUController cpuController;
 
     [Header("Bonus Configuration")]
     [SerializeField] private int[] backboardBonusValues = { 2, 4, 6 };
@@ -33,7 +36,18 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
+        InitializeMatch();
+    }
+
+    private void InitializeMatch()
+    {
         scoreController.ResetScores();
+
+        // Randomly decide player orientation - CPU starts on the opposite side
+        bool playerStartsRight = UnityEngine.Random.value > 0.5f;
+        playerShootingPositionController.GenerateNewRound(playerStartsRight);
+        cpuShootingPositionController.GenerateNewRound(!playerStartsRight);
+
         gameTimerController.StartMatch();
     }
 
@@ -42,11 +56,11 @@ public class GameController : MonoBehaviour
         isBonusReady = true;
     }
 
-    private void HandleBasketScored(ShotType shotType)
+    private void HandleBasketScored(ShotType shotType, GameEntity scoredEntity)
     {
         // this is just if we don't want to count the last basket scored after the match has ended
         //if (!gameTimerController.IsMatchActive) return;
-        scoreController.AddScore(ScoringEntity.Player, shotType);
+        scoreController.AddScore(scoredEntity, shotType);
 
         if (isBonusActive && shotType == ShotType.PerfectBackboard)
         {
@@ -83,6 +97,7 @@ public class GameController : MonoBehaviour
     private void HandleMatchEnded()
     {
         throwBallInputHandler.enabled = false;
+        cpuController.enabled = false;
 
         if (isBonusActive)
         {

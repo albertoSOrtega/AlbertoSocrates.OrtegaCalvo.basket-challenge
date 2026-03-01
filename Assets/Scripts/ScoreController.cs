@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum ScoringEntity { Player, CPU }
+public enum GameEntity { Player, CPU }
 
 public class ScoreController : MonoBehaviour
 { 
@@ -12,7 +12,7 @@ public class ScoreController : MonoBehaviour
 
     // Events
     public event System.Action<int, int> OnScoreUpdated;           // playerScore, cpuScore
-    public event System.Action<int, ScoringEntity> OnBasketScored; // points, who scored
+    public event System.Action<int, GameEntity> OnBasketScored; // points, who scored
 
     // State
     public int PlayerScore  { get; private set; }
@@ -27,12 +27,12 @@ public class ScoreController : MonoBehaviour
         OnScoreUpdated?.Invoke(PlayerScore, CpuScore);
     }
 
-    public void AddScore(ScoringEntity entity, ShotType shotType)
+    public void AddScore(GameEntity entity, ShotType shotType)
     {
         int points = CalculatePoints(shotType);
         if (points == 0) return;
 
-        if (entity == ScoringEntity.Player)
+        if (entity == GameEntity.Player)
             PlayerScore += points;
         else
             CpuScore += points;

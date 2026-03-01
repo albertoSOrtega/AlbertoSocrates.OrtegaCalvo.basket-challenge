@@ -5,4 +5,5 @@ using UnityEngine;
 public class BallController : MonoBehaviour
 {
     public ShotType CurrentShotType { get; set; }
+    public GameEntity Owner { get; set; }
 }

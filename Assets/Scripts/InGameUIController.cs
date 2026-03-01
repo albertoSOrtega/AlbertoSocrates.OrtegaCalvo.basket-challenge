@@ -10,7 +10,8 @@ public class InGameUIController : MonoBehaviour
     [Header("UI References")]
     public Slider shootPowerSlider;
     public TextMeshProUGUI shootText;
-    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI playerScoreText;
+    public TextMeshProUGUI cpuScoreText;
     public TextMeshProUGUI timerText;
     public ThrowBallInputHandler throwBallInputHandler;
     public Image perfectZoneImage;
@@ -161,7 +162,8 @@ public class InGameUIController : MonoBehaviour
 
     public void UpdateScore(int PlayerScore, int CPUScore)
     {
-        scoreText.text = $"Score\n{PlayerScore}";
+        playerScoreText.text = $"Score\n{PlayerScore}";
+        cpuScoreText.text = $"Score\n{CPUScore}";
     }
 
     public void UpdateTimer(float currentTime)
@@ -173,6 +175,7 @@ public class InGameUIController : MonoBehaviour
     void Start()
     {
         perfectZoneImage.color = normalPerfectZoneColor;
+        UpdateScore(0, 0);
     }
 
     // Update is called once per frame
