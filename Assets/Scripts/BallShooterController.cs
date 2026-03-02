@@ -65,11 +65,12 @@ public class BallShooterController : MonoBehaviour
 
     // Events
     public event System.Action OnShotStarted;
-    public event System.Action<ShotType> OnShotCompleted;
+    public event System.Action<ShotType, GameEntity> OnShotCompleted;
 
     // State
     private bool isShooting = false;
     private ShotType currentShotType;
+    private GameEntity currentOwner; 
     private Vector3 shotOrigin;
     private Vector3 inCP;
     private Vector3 outCP;
@@ -89,10 +90,11 @@ public class BallShooterController : MonoBehaviour
         isShooting = false;
     }
 
-    public void SetBall(Transform ballTransformParam)
+    public void SetBall(Transform ballTransformParam, GameEntity gameEntity)
     {
         ballTransform = ballTransformParam;
         ballRb = ballTransform.GetComponent<Rigidbody>();
+        currentOwner = gameEntity;
     }
 
     public Transform GetBallTransform()
@@ -136,7 +138,7 @@ public class BallShooterController : MonoBehaviour
 
         isShooting = false;
 
-        OnShotCompleted?.Invoke(currentShotType);
+        OnShotCompleted?.Invoke(currentShotType, currentOwner);
         Debug.Log("Shot completed. RB Physics are enabled.");
     }
 
@@ -419,7 +421,7 @@ public class BallShooterController : MonoBehaviour
         isShooting = false;
         securityBarrier.enabled = false;
         ballPhysicMaterial.bounceCombine = PhysicMaterialCombine.Average;
-        OnShotCompleted?.Invoke(currentShotType);
+        OnShotCompleted?.Invoke(currentShotType, currentOwner);
         Debug.Log($"[BallShooterController] Backboard shot completed: {currentShotType}");
     }
 

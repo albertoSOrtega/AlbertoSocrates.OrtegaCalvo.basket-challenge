@@ -1,9 +1,13 @@
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public enum GameEntity { Player, CPU }
 
 public class ScoreController : MonoBehaviour
-{ 
+{
+
+    [Header("References")]
+    [SerializeField] private FireballController fireballController;
 
     [Header("Points Configuration")]
     [SerializeField] private int perfectShotBasePoints = 3;
@@ -11,14 +15,12 @@ public class ScoreController : MonoBehaviour
     [SerializeField] private int imperfectShotBasePoints = 2;
 
     // Events
-    public event System.Action<int, int> OnScoreUpdated;           // playerScore, cpuScore
-    public event System.Action<int, GameEntity> OnBasketScored; // points, who scored
+    public event System.Action<int, int> OnScoreUpdated; // playerScore, cpuScore
 
     // State
     public int PlayerScore  { get; private set; }
     public int CpuScore { get; private set; }
     private int currentBackboardBonus = 0;
-    private int currentFireballMultiplier = 1;
 
     public void ResetScores()
     {
@@ -29,7 +31,7 @@ public class ScoreController : MonoBehaviour
 
     public void AddScore(GameEntity entity, ShotType shotType)
     {
-        int points = CalculatePoints(shotType);
+        int points = CalculatePoints(entity, shotType);
         if (points == 0) return;
 
         if (entity == GameEntity.Player)
@@ -43,16 +45,27 @@ public class ScoreController : MonoBehaviour
                   $"Player: {PlayerScore} | CPU: {CpuScore}");
     }
 
-    private int CalculatePoints(ShotType shotType)
+    private int CalculatePoints(GameEntity gameEntity, ShotType shotType)
     {
+        // Calculate Fireball multiplier that only applies to the player
+        int fireballMultiplier;
+        if (gameEntity == GameEntity.Player)
+        {
+            fireballMultiplier = fireballController.GetScoreFireballBonusMultiplier();
+        }
+        else
+        {
+            fireballMultiplier = 1; // CPU does not get Fireball multiplier
+        }
+
         switch (shotType)
         {
             case ShotType.Perfect:
-                return perfectShotBasePoints * currentFireballMultiplier;
+                return perfectShotBasePoints * fireballMultiplier;
             case ShotType.Imperfect:
-                return imperfectShotBasePoints * currentFireballMultiplier;
+                return imperfectShotBasePoints * fireballMultiplier;
             case ShotType.PerfectBackboard:
-                return (perfectBackboardBasePoints + currentBackboardBonus) * currentFireballMultiplier;
+                return (perfectBackboardBasePoints + currentBackboardBonus) * fireballMultiplier;
             default:
                 return 0;
         }

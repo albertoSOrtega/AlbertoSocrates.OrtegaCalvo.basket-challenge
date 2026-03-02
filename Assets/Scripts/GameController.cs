@@ -12,6 +12,7 @@ public class GameController : MonoBehaviour
     [SerializeField] private ShootingPositionController playerShootingPositionController;
     [SerializeField] private ShootingPositionController cpuShootingPositionController;
     [SerializeField] private CPUController cpuController;
+    [SerializeField] private FireballController fireballController;
 
     // Events
     public event System.Action OnBackboardBonusActivated;
@@ -62,6 +63,9 @@ public class GameController : MonoBehaviour
 
     private void HandleBasketScored(ShotType shotType, GameEntity scoredEntity)
     {
+        if (scoredEntity == GameEntity.Player)
+            fireballController.HandlePlayerBasketScored(shotType);
+
         // this is just if we don't want to count the last basket scored after the match has ended
         //if (!gameTimerController.IsMatchActive) return;
         scoreController.AddScore(scoredEntity, shotType);

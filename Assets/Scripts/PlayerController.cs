@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(PlayerJumpAndShoot(shootPower));
     }
 
-    private void HandleShotCompleted(ShotType shotType)
+    private void HandleShotCompleted(ShotType shotType, GameEntity gameEntity)
     {
         BallPoolController.instance.ReturnBall(currentBall, 2f);
         currentBall = null;
@@ -110,7 +110,7 @@ public class PlayerController : MonoBehaviour
         BallController ballController = currentBall.GetComponent<BallController>();
         ballController.Owner = GameEntity.Player;
 
-        ballShooterController.SetBall(currentBall.transform);
+        ballShooterController.SetBall(currentBall.transform, GameEntity.Player);
 
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }

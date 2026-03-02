@@ -9,6 +9,7 @@ public class InGameUIController : MonoBehaviour
 {
     [Header("Landscape UI References")]
     [SerializeField] private Slider shootPowerSlider_LS;
+    [SerializeField] private Slider fireballSlider_LS;
     [SerializeField] private TextMeshProUGUI shootText_LS;
     [SerializeField] private TextMeshProUGUI playerScoreText_LS;
     [SerializeField] private TextMeshProUGUI cpuScoreText_LS;
@@ -18,6 +19,7 @@ public class InGameUIController : MonoBehaviour
 
     [Header("Portrait UI References")]
     [SerializeField] private Slider shootPowerSlider_PT;
+    [SerializeField] private Slider fireballSlider_PT;
     [SerializeField] private TextMeshProUGUI shootText_PT;
     [SerializeField] private TextMeshProUGUI playerScoreText_PT;
     [SerializeField] private TextMeshProUGUI cpuScoreText_PT;
@@ -30,6 +32,7 @@ public class InGameUIController : MonoBehaviour
     public BallShooterController ballShooterController;
     public ScoreController scoreController;
     public GameTimerController gameTimerController;
+    public FireballController fireballController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -39,6 +42,7 @@ public class InGameUIController : MonoBehaviour
 
     // Intern active references (point to the correct orientation ones at runtime)
     public Slider shootPowerSlider;
+    private Slider fireballSlider;
     public TextMeshProUGUI shootText;
     public TextMeshProUGUI playerScoreText;
     public TextMeshProUGUI cpuScoreText;
@@ -52,6 +56,7 @@ public class InGameUIController : MonoBehaviour
         bool isPortrait = Screen.height > Screen.width;
 
         shootPowerSlider = isPortrait ? shootPowerSlider_PT : shootPowerSlider_LS;
+        fireballSlider = isPortrait ? fireballSlider_PT : fireballSlider_LS;
         shootText = isPortrait ? shootText_PT : shootText_LS;
         playerScoreText = isPortrait ? playerScoreText_PT : playerScoreText_LS;
         cpuScoreText = isPortrait ? cpuScoreText_PT : cpuScoreText_LS;
@@ -74,6 +79,10 @@ public class InGameUIController : MonoBehaviour
 
         // Subscribe to the events of the GameTimerController
         gameTimerController.OnTimerTick += UpdateTimer;
+
+        fireballController.OnBarValueChanged += UpdateFireballBar;
+        fireballController.OnFireballBonusActivated += ActivateFireballBonusVisuals;
+        fireballController.OnFireballBonusDeactivated += DeactivateFireballBonusVisuals;
     }
 
     private void OnDisable()
@@ -90,6 +99,10 @@ public class InGameUIController : MonoBehaviour
 
         // Unsscribe to the events of the GameTimerController
         gameTimerController.OnTimerTick -= UpdateTimer;
+
+        fireballController.OnBarValueChanged -= UpdateFireballBar;
+        fireballController.OnFireballBonusActivated -= ActivateFireballBonusVisuals;
+        fireballController.OnFireballBonusDeactivated -= DeactivateFireballBonusVisuals;
     }
 
     public void UIHandleShoot(float shootPower)
@@ -208,6 +221,21 @@ public class InGameUIController : MonoBehaviour
     public void UpdateTimer(float currentTime)
     {
         timerText.text = $"{currentTime:0.00}s";
+    }
+
+    private void UpdateFireballBar(float value)
+    {
+        fireballSlider.value = value;
+    }
+
+    private void ActivateFireballBonusVisuals()
+    {
+        fireballSlider.fillRect.GetComponent<Image>().color = Color.red; // Change color to indicate bonus
+    }
+
+    private void DeactivateFireballBonusVisuals()
+    {
+        fireballSlider.fillRect.GetComponent<Image>().color = Color.yellow; // Revert to normal color
     }
 
     // Start is called before the first frame update
