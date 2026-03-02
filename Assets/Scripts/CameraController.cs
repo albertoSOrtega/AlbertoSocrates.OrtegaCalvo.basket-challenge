@@ -102,7 +102,7 @@ public class CameraController : MonoBehaviour
     }
 
     // Calls the Coroutine
-    private void CameraHandleShotCompleted(ShotType shotType, GameEntity gameEntity)
+    private void CameraHandleShotCompleted(ShotType shotType)
     {
         // We do not follow the ball anymore, we wait until the shake is done to start following the player again
         ballTransform = null;

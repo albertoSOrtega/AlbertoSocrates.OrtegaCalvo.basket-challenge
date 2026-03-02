@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(PlayerJumpAndShoot(shootPower));
     }
 
-    private void HandleShotCompleted(ShotType shotType, GameEntity gameEntity)
+    private void HandleShotCompleted(ShotType shotType)
     {
         BallPoolController.instance.ReturnBall(currentBall, 2f);
         currentBall = null;

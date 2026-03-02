@@ -68,6 +68,7 @@ public class GameController : MonoBehaviour
 
         // this is just if we don't want to count the last basket scored after the match has ended
         //if (!gameTimerController.IsMatchActive) return;
+
         scoreController.AddScore(scoredEntity, shotType);
 
         if (isBonusActive && shotType == ShotType.PerfectBackboard)
