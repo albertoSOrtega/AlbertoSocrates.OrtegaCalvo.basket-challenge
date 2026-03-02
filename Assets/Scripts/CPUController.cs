@@ -193,7 +193,7 @@ public class CPUController : MonoBehaviour
         BallController ballController = currentBall.GetComponent<BallController>();
         ballController.Owner = GameEntity.CPU;
 
-        ballShooterController.SetBall(currentBall.transform);
+        ballShooterController.SetBall(currentBall.transform, GameEntity.CPU);
 
         Debug.Log($"[CPUController] Ball spawned at: {currentBall.transform.position}");
     }

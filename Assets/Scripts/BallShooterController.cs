@@ -89,7 +89,7 @@ public class BallShooterController : MonoBehaviour
         isShooting = false;
     }
 
-    public void SetBall(Transform ballTransformParam)
+    public void SetBall(Transform ballTransformParam, GameEntity gameEntity)
     {
         ballTransform = ballTransformParam;
         ballRb = ballTransform.GetComponent<Rigidbody>();

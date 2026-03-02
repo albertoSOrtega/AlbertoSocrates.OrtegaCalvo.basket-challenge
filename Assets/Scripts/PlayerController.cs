@@ -110,7 +110,7 @@ public class PlayerController : MonoBehaviour
         BallController ballController = currentBall.GetComponent<BallController>();
         ballController.Owner = GameEntity.Player;
 
-        ballShooterController.SetBall(currentBall.transform);
+        ballShooterController.SetBall(currentBall.transform, GameEntity.Player);
 
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }
