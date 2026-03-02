@@ -11,6 +11,7 @@ public class GameController : MonoBehaviour
     [SerializeField] private BasketballDetectorController basketDetectorController;
     [SerializeField] private ShootingPositionController playerShootingPositionController;
     [SerializeField] private ShootingPositionController cpuShootingPositionController;
+    [SerializeField] private BallShooterController playerBallShooterController;
     [SerializeField] private CPUController cpuController;
     [SerializeField] private FireballController fireballController;
 
@@ -30,6 +31,7 @@ public class GameController : MonoBehaviour
         gameTimerController.OnMatchEnded += HandleMatchEnded;
         gameTimerController.OnBonusIntervalStarted += HandleBonusIntervalStarted;
         basketDetectorController.OnBasketballScored += HandleBasketScored;
+        playerBallShooterController.OnShotCompleted += HandlePlayerShotCompleted;
     }
 
     private void OnDisable()
@@ -37,6 +39,7 @@ public class GameController : MonoBehaviour
         gameTimerController.OnMatchEnded -= HandleMatchEnded;
         gameTimerController.OnBonusIntervalStarted -= HandleBonusIntervalStarted;
         basketDetectorController.OnBasketballScored -= HandleBasketScored;
+        playerBallShooterController.OnShotCompleted -= HandlePlayerShotCompleted;
     }
 
     private void Start()
@@ -78,6 +81,15 @@ public class GameController : MonoBehaviour
         else if (isBonusReady && !isBonusActive)
         {
             ActivateBonus();
+        }
+    }
+
+    // For detecting possible missed shots after the player completes a shot - It would drain the fireball bar
+    private void HandlePlayerShotCompleted(ShotType shotType)
+    {
+        if (shotType == ShotType.Short || shotType == ShotType.LowerBackboard || shotType == ShotType.UpperBackboard)
+        {
+            fireballController.HandlePlayerPossibleMissedShot();
         }
     }
 

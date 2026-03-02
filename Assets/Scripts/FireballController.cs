@@ -22,16 +22,6 @@ public class FireballController : MonoBehaviour
     private float fireballBarValue = 0f;
     private bool isFireballBonusActive = false;
 
-    private void OnEnable()
-    {
-        playerBallShooterController.OnShotCompleted += HandlePlayerPossibleMissedShot;
-    }
-
-    private void OnDisable()
-    {
-        playerBallShooterController.OnShotCompleted -= HandlePlayerPossibleMissedShot;
-    }
-
     public bool GetIsFireballBonusActive()
     {
         return isFireballBonusActive;
@@ -71,14 +61,11 @@ public class FireballController : MonoBehaviour
     }
 
     // Called when OnShotCompleted event is raised, to check for missed shots and empty the bar if needed
-    public void HandlePlayerPossibleMissedShot(ShotType shotType)
+    public void HandlePlayerPossibleMissedShot()
     {
         if (!isFireballBonusActive) return; // Only handle player's missed shots when bonus is active
 
-        if (shotType == ShotType.Short || shotType == ShotType.LowerBackboard || shotType == ShotType.UpperBackboard)
-        {
-            EmptyFireballBonusBar();
-        }
+        EmptyFireballBonusBar();
     }
 
     private void FillFireballBonusBar(float amount)
