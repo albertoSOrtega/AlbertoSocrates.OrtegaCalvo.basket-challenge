@@ -46,6 +46,7 @@ public class BackboardVisualFeedbackController : MonoBehaviour
         materialInstance = backboardRenderer.material;
         // Force enable emission on the material instance - Autodesk Interactive requires this explicitly
         materialInstance.EnableKeyword("_EMISSION");
+        materialInstance.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         materialInstance.SetColor(EmissionColorID, Color.black); // starts off, no glow
     }
 
