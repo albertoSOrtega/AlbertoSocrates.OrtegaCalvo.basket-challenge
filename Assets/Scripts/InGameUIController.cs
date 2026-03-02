@@ -7,20 +7,32 @@ using UnityEngine.UI;
 
 public class InGameUIController : MonoBehaviour
 {
-    [Header("UI References")]
-    public Slider shootPowerSlider;
-    public TextMeshProUGUI shootText;
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI timerText;
-    public ThrowBallInputHandler throwBallInputHandler;
-    public Image perfectZoneImage;
-    public Image backboardZoneImage;
+    [Header("Landscape UI References")]
+    [SerializeField] private Slider shootPowerSlider_LS;
+    [SerializeField] private Slider fireballSlider_LS;
+    [SerializeField] private TextMeshProUGUI shootText_LS;
+    [SerializeField] private TextMeshProUGUI playerScoreText_LS;
+    [SerializeField] private TextMeshProUGUI cpuScoreText_LS;
+    [SerializeField] private TextMeshProUGUI timerText_LS;
+    [SerializeField] private Image perfectZoneImage_LS;
+    [SerializeField] private Image backboardZoneImage_LS;
+
+    [Header("Portrait UI References")]
+    [SerializeField] private Slider shootPowerSlider_PT;
+    [SerializeField] private Slider fireballSlider_PT;
+    [SerializeField] private TextMeshProUGUI shootText_PT;
+    [SerializeField] private TextMeshProUGUI playerScoreText_PT;
+    [SerializeField] private TextMeshProUGUI cpuScoreText_PT;
+    [SerializeField] private TextMeshProUGUI timerText_PT;
+    [SerializeField] private Image perfectZoneImage_PT;
+    [SerializeField] private Image backboardZoneImage_PT;
 
     [Header("Controller References")]
     public ShootingBarZoneController shootingBarZoneController;
     public BallShooterController ballShooterController;
     public ScoreController scoreController;
     public GameTimerController gameTimerController;
+    public FireballController fireballController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -28,40 +40,69 @@ public class InGameUIController : MonoBehaviour
     public Color normalBackboardZoneColor = new Color(0.7f, 0f, 1f, 1f);
     public Color inBackboardZoneColor = new Color(1f, 0f, 0.7f, 1f);
 
+    // Intern active references (point to the correct orientation ones at runtime)
+    public Slider shootPowerSlider;
+    private Slider fireballSlider;
+    public TextMeshProUGUI shootText;
+    public TextMeshProUGUI playerScoreText;
+    public TextMeshProUGUI cpuScoreText;
+    public TextMeshProUGUI timerText;
+    public ThrowBallInputHandler throwBallInputHandler;
+    public Image perfectZoneImage;
+    public Image backboardZoneImage;
+
+    private void Awake()
+    {
+        bool isPortrait = Screen.height > Screen.width;
+
+        shootPowerSlider = isPortrait ? shootPowerSlider_PT : shootPowerSlider_LS;
+        fireballSlider = isPortrait ? fireballSlider_PT : fireballSlider_LS;
+        shootText = isPortrait ? shootText_PT : shootText_LS;
+        playerScoreText = isPortrait ? playerScoreText_PT : playerScoreText_LS;
+        cpuScoreText = isPortrait ? cpuScoreText_PT : cpuScoreText_LS;
+        timerText = isPortrait ? timerText_PT : timerText_LS;
+        perfectZoneImage = isPortrait ? perfectZoneImage_PT : perfectZoneImage_LS;
+        backboardZoneImage = isPortrait ? backboardZoneImage_PT : backboardZoneImage_LS;
+    }
+
     private void OnEnable()
     {
         // Subscribe to the events from the ThrowBallInputHandler
-        throwBallInputHandler.OnSwipeStarted += ResetSlider;
+        throwBallInputHandler.OnInputEnabledNextFrame += ResetAfterShot;
+        throwBallInputHandler.OnInputEnabledNextFrame += InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged += UpdateSlider;
         throwBallInputHandler.OnShootReleased += UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled += UIHandleCancelShoot;
-
-        // Suscribe to the eevnts of the shootingBarZoneController to initialize the perfect zone rect when randomized
-        shootingBarZoneController.OnShootingZonesInitialized += InitializeZoneRects;
-
-        // Subscribe to the events of the BallShooterController
-        ballShooterController.OnShotCompleted += ResetAfterShot;
 
         // Subscribe to the events of the ScoreController
         scoreController.OnScoreUpdated += UpdateScore;
 
         // Subscribe to the events of the GameTimerController
         gameTimerController.OnTimerTick += UpdateTimer;
+
+        fireballController.OnBarValueChanged += UpdateFireballBar;
+        fireballController.OnFireballBonusActivated += ActivateFireballBonusVisuals;
+        fireballController.OnFireballBonusDeactivated += DeactivateFireballBonusVisuals;
     }
 
     private void OnDisable()
     {
         // Unsubscribe to the events from the ThrowBallInputHandler
-        throwBallInputHandler.OnSwipeStarted -= ResetSlider;
+        throwBallInputHandler.OnInputEnabledNextFrame -= ResetAfterShot;
+        throwBallInputHandler.OnInputEnabledNextFrame -= InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged -= UpdateSlider;
         throwBallInputHandler.OnShootReleased -= UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
-        // Unsubscribe to the eevnts of the shootingBarZoneController
-        shootingBarZoneController.OnShootingZonesInitialized -= InitializeZoneRects;
+        // Unsubscribe to the events of the ScoreController
+        scoreController.OnScoreUpdated -= UpdateScore;
 
-        // Unsubscribe to the events of the BallShooterController
-        ballShooterController.OnShotCompleted -= ResetAfterShot;
+        // Unsscribe to the events of the GameTimerController
+        gameTimerController.OnTimerTick -= UpdateTimer;
+
+        fireballController.OnBarValueChanged -= UpdateFireballBar;
+        fireballController.OnFireballBonusActivated -= ActivateFireballBonusVisuals;
+        fireballController.OnFireballBonusDeactivated -= DeactivateFireballBonusVisuals;
     }
 
     public void UIHandleShoot(float shootPower)
@@ -81,19 +122,15 @@ public class InGameUIController : MonoBehaviour
                 break;
             case ShotType.Short:
                 shootText.text = $"Short Shot, You Failed! {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.PerfectBackboard:
                 shootText.text = $"Perfect backboard shot! {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.LowerBackboard:
                 shootText.text = $"Lower backboad shot, you failed {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.UpperBackboard:
                 shootText.text = $"upper backboard shot, you failed {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             default:
                 shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
@@ -122,7 +159,7 @@ public class InGameUIController : MonoBehaviour
         shootPowerSlider.value = 0f;
     }
 
-    public void ResetAfterShot(ShotType shotType)
+    public void ResetAfterShot()
     {
         ResetSlider();
         UpdateSlider(0f);
@@ -131,20 +168,36 @@ public class InGameUIController : MonoBehaviour
     // Positions and sizes both zone images based on the computed boundaries
     public void InitializeZoneRects()
     {
-        // Slider is rotated 90º in Z, so we use rect.width as the bar length
-        float sliderLength = ((RectTransform)shootPowerSlider.transform).rect.width;
+        RectTransform sliderRect = (RectTransform)shootPowerSlider.transform;
+        bool isVertical = sliderRect.rect.height > sliderRect.rect.width;
+        float sliderLength = isVertical ? sliderRect.rect.height : sliderRect.rect.width;
 
-        // Perfect zone
-        float perfectPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
-        float perfectWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
-        perfectZoneImage.rectTransform.anchoredPosition = new Vector2(perfectPosX, 0f);
-        perfectZoneImage.rectTransform.sizeDelta = new Vector2(perfectWidth, 0f);
+        if (isVertical)
+        {
+            // Vertical slider — zones positioned on Y axis
+            float perfectPosY = shootingBarZoneController.perfectZoneStart * sliderLength;
+            float perfectHeight = shootingBarZoneController.perfectZoneSize * sliderLength;
+            perfectZoneImage.rectTransform.anchoredPosition = new Vector2(0f, perfectPosY);
+            perfectZoneImage.rectTransform.sizeDelta = new Vector2(0f, perfectHeight);
 
-        // Backboard zone
-        float backboardPosX = shootingBarZoneController.backboardStart * sliderLength;
-        float backboardWidth = shootingBarZoneController.backboardZoneSize * sliderLength;
-        backboardZoneImage.rectTransform.anchoredPosition = new Vector2(backboardPosX, 0f);
-        backboardZoneImage.rectTransform.sizeDelta = new Vector2(backboardWidth, 0f);
+            float backboardPosY = shootingBarZoneController.backboardStart * sliderLength;
+            float backboardHeight = shootingBarZoneController.backboardZoneSize * sliderLength;
+            backboardZoneImage.rectTransform.anchoredPosition = new Vector2(0f, backboardPosY);
+            backboardZoneImage.rectTransform.sizeDelta = new Vector2(0f, backboardHeight);
+        }
+        else
+        {
+            // Horizontal slider — zones positioned on X axis
+            float perfectPosX = shootingBarZoneController.perfectZoneStart * sliderLength;
+            float perfectWidth = shootingBarZoneController.perfectZoneSize * sliderLength;
+            perfectZoneImage.rectTransform.anchoredPosition = new Vector2(perfectPosX, 0f);
+            perfectZoneImage.rectTransform.sizeDelta = new Vector2(perfectWidth, 0f);
+
+            float backboardPosX = shootingBarZoneController.backboardStart * sliderLength;
+            float backboardWidth = shootingBarZoneController.backboardZoneSize * sliderLength;
+            backboardZoneImage.rectTransform.anchoredPosition = new Vector2(backboardPosX, 0f);
+            backboardZoneImage.rectTransform.sizeDelta = new Vector2(backboardWidth, 0f);
+        }
     }
 
     // Updates both zone image colors independently and always resets the inactive one
@@ -161,7 +214,8 @@ public class InGameUIController : MonoBehaviour
 
     public void UpdateScore(int PlayerScore, int CPUScore)
     {
-        scoreText.text = $"Score\n{PlayerScore}";
+        playerScoreText.text = $"Score\n{PlayerScore}";
+        cpuScoreText.text = $"Score\n{CPUScore}";
     }
 
     public void UpdateTimer(float currentTime)
@@ -169,10 +223,26 @@ public class InGameUIController : MonoBehaviour
         timerText.text = $"{currentTime:0.00}s";
     }
 
+    private void UpdateFireballBar(float value)
+    {
+        fireballSlider.value = value;
+    }
+
+    private void ActivateFireballBonusVisuals()
+    {
+        fireballSlider.fillRect.GetComponent<Image>().color = Color.red; // Change color to indicate bonus
+    }
+
+    private void DeactivateFireballBonusVisuals()
+    {
+        fireballSlider.fillRect.GetComponent<Image>().color = Color.yellow; // Revert to normal color
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         perfectZoneImage.color = normalPerfectZoneColor;
+        UpdateScore(0, 0);
     }
 
     // Update is called once per frame

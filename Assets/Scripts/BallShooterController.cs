@@ -89,7 +89,7 @@ public class BallShooterController : MonoBehaviour
         isShooting = false;
     }
 
-    public void SetBall(Transform ballTransformParam)
+    public void SetBall(Transform ballTransformParam, GameEntity gameEntity)
     {
         ballTransform = ballTransformParam;
         ballRb = ballTransform.GetComponent<Rigidbody>();
@@ -229,7 +229,7 @@ public class BallShooterController : MonoBehaviour
     public float CalculateShortShotDistance(float shootPower)
     {
         // Power low limit (minSwipe / maxSwipe)
-        float minPower = throwBallInputHandler.GetMinSwipeDistance() / throwBallInputHandler.GetMaxSwipeDistance();
+        float minPower = throwBallInputHandler.GetMinSwipeDistancePx() / throwBallInputHandler.GetMaxSwipeDistancePx();
         float maxPower = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;
 
         // Normalize shootPower 0 y 1
@@ -243,6 +243,17 @@ public class BallShooterController : MonoBehaviour
         float finalDistance = Mathf.Lerp(shortShotMinDistanceFromRim, shortShotMaxDistanceFromRim, t);
 
         return finalDistance;
+    }
+
+    // Returns the shootPower range [min, max] that maps to the Short Shot zone.
+    // Used by the CPU to generate a valid random power without needing a swipe. Gets the information from the player.
+    public void GetShortShotPowerRange(out float min, out float max)
+    {
+        // Lower bound: minimum registered swipe converted to [0,1] power
+        min = throwBallInputHandler.GetMinSwipeDistancePx() / throwBallInputHandler.GetMaxSwipeDistancePx();
+
+        // Upper bound: just below the first imperfect zone
+        max = shootingBarZoneController.perfectZoneStart - shootingBarZoneController.imperfectZoneSize;
     }
 
     // Starts the imperfect shot by calculating control points, then animating the ball along a Bezier curve to a random point on the rim edge.
