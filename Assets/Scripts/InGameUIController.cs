@@ -63,16 +63,11 @@ public class InGameUIController : MonoBehaviour
     private void OnEnable()
     {
         // Subscribe to the events from the ThrowBallInputHandler
-        throwBallInputHandler.OnSwipeStarted += ResetSlider;
+        throwBallInputHandler.OnInputEnabledNextFrame += ResetAfterShot;
+        throwBallInputHandler.OnInputEnabledNextFrame += InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged += UpdateSlider;
         throwBallInputHandler.OnShootReleased += UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled += UIHandleCancelShoot;
-
-        // Suscribe to the eevnts of the shootingBarZoneController to initialize the perfect zone rect when randomized
-        shootingBarZoneController.OnShootingZonesInitialized += InitializeZoneRects;
-
-        // Subscribe to the events of the BallShooterController
-        ballShooterController.OnShotCompleted += ResetAfterShot;
 
         // Subscribe to the events of the ScoreController
         scoreController.OnScoreUpdated += UpdateScore;
@@ -84,16 +79,17 @@ public class InGameUIController : MonoBehaviour
     private void OnDisable()
     {
         // Unsubscribe to the events from the ThrowBallInputHandler
-        throwBallInputHandler.OnSwipeStarted -= ResetSlider;
+        throwBallInputHandler.OnInputEnabledNextFrame -= ResetAfterShot;
+        throwBallInputHandler.OnInputEnabledNextFrame -= InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged -= UpdateSlider;
         throwBallInputHandler.OnShootReleased -= UIHandleShoot;
         throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
-        // Unsubscribe to the eevnts of the shootingBarZoneController
-        shootingBarZoneController.OnShootingZonesInitialized -= InitializeZoneRects;
+        // Unsubscribe to the events of the ScoreController
+        scoreController.OnScoreUpdated -= UpdateScore;
 
-        // Unsubscribe to the events of the BallShooterController
-        ballShooterController.OnShotCompleted -= ResetAfterShot;
+        // Unsscribe to the events of the GameTimerController
+        gameTimerController.OnTimerTick -= UpdateTimer;
     }
 
     public void UIHandleShoot(float shootPower)
@@ -113,19 +109,15 @@ public class InGameUIController : MonoBehaviour
                 break;
             case ShotType.Short:
                 shootText.text = $"Short Shot, You Failed! {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.PerfectBackboard:
                 shootText.text = $"Perfect backboard shot! {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.LowerBackboard:
                 shootText.text = $"Lower backboad shot, you failed {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             case ShotType.UpperBackboard:
                 shootText.text = $"upper backboard shot, you failed {shootPower}";
-                ResetAfterShot(shotType);
                 break;
             default:
                 shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
@@ -154,7 +146,7 @@ public class InGameUIController : MonoBehaviour
         shootPowerSlider.value = 0f;
     }
 
-    public void ResetAfterShot(ShotType shotType)
+    public void ResetAfterShot()
     {
         ResetSlider();
         UpdateSlider(0f);

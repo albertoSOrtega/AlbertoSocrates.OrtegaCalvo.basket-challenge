@@ -35,9 +35,6 @@ public class ShootingBarZoneController : MonoBehaviour
 
     private const float UpperBackboardMinSize = 0.1f;
 
-    // Event for drawing all zones once initialized
-    public event System.Action OnShootingZonesInitialized;
-
     private void OnEnable()
     {
         shootingPositionController.OnNewRoundGenerated += InitializeZones;
@@ -102,7 +99,6 @@ public class ShootingBarZoneController : MonoBehaviour
         // upperBackboardEnd  = 1f (always)
 
         ValidateBoundaries();
-        OnShootingZonesInitialized?.Invoke();
     }
 
     private void ValidateBoundaries()
