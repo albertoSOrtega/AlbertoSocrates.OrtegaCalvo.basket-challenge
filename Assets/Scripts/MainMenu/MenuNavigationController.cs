@@ -71,6 +71,8 @@ public class MenuNavigationController : MonoBehaviour
     [Header("References")]
     [SerializeField] private MenuAudioController audioController;
     [SerializeField] private GameObject backButton;
+    [SerializeField] private MatchResultSO matchResult; // for checking if we just played a match
+    [SerializeField] private SelectedDifficultySO selectedDifficulty;
 
     // state
     private List<MenuPanel> panels; // Reference to the currently active panel configuration (landscape or portrait) based on device orientation
@@ -114,6 +116,8 @@ public class MenuNavigationController : MonoBehaviour
             popups = landscapePopups;
         }
 
+        selectedDifficulty?.Clear();
+
         BuildAccessDict();
         BuildPopupAccessDict();
         HideAllPanels();
@@ -133,9 +137,20 @@ public class MenuNavigationController : MonoBehaviour
 
     private void Start()
     {
-        // Show the initial panel immediately, with no transition
-        ShowImmediate(initialPanel);
-        currentPanel = initialPanel;
+        if (matchResult != null && matchResult.hasResult)
+        {
+            // After a game -> go direct to Results
+            ShowImmediate(MenuPanelType.Results);
+            currentPanel = MenuPanelType.Results;
+            navigationStack.Push(MenuPanelType.MainMenu);
+            backButton.SetActive(true);
+        }
+        else
+        {
+            // Standard flow -> go to initial panel 
+            ShowImmediate(initialPanel);
+            currentPanel = initialPanel;
+        }
     }
 
     private void Update()
