@@ -1,5 +1,6 @@
 using DG.Tweening;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,14 +9,14 @@ public class MenuNavigationController : MonoBehaviour
 
     // Panel configuration - This panels will be used for all the menus and submenus in the game, so we can easily change the configuration of all the panels by changing this configuration
 
-    public enum MenuPanelType
+    public enum MenuPanelType 
+    { 
+        InitialScreen, MainMenu, GameModeSelector, LootboxOpener, Results 
+    }
+
+    public enum PopupType
     {
-        InitialScreen,
-        MainMenu,
-        GameModeSelector,
-        DailyMissions,
-        LootboxOpener,
-        Results
+        QuitGame, DailyMissions, LootboxRewards
     }
 
     public enum SlideDirection
@@ -35,10 +36,27 @@ public class MenuNavigationController : MonoBehaviour
         [Min(0f)] public float slideDistanceOverride = 0f;
     }
 
+    [System.Serializable]
+    public class PopupPanel
+    {
+        public PopupType popupType;
+        public GameObject popupObject;      
+        public GameObject overlayObject; // for blocing clicks outside the popup and adding a dimming effect
+        public SlideDirection slideFrom = SlideDirection.Down;
+
+        [Header("Transition Overrides - 0 to use global defaults")]
+        [Min(0f)] public float durationOverride = 0f;
+        [Min(0f)] public float slideDistanceOverride = 0f;
+    }
+
     [Header("Panel Configuration")]
     [SerializeField] private List<MenuPanel> landscapePanels;
     [SerializeField] private List<MenuPanel> portraitPanels;
     [SerializeField] private MenuPanelType initialPanel = MenuPanelType.InitialScreen;
+
+    [Header("Popup Configuration")]
+    [SerializeField] private List<PopupPanel> landscapePopups;
+    [SerializeField] private List<PopupPanel> portraitPopups;
 
     [Header("Default Panel Transition Configuration")]
     [SerializeField] private float defaultDuration = 0.35f;
@@ -46,20 +64,30 @@ public class MenuNavigationController : MonoBehaviour
     [SerializeField] private Ease defaultSlideEase = Ease.OutCubic;
     [SerializeField] private Ease defaultFadeEase = Ease.OutCubic;
 
+    [Header("Overlay and dimming configuration")]
+    [SerializeField] private float overlayFadeDuration = 0.2f;
+    [SerializeField] private float overlayMaxAlpha = 0.6f;
+
     [Header("References")]
     [SerializeField] private MenuAudioController audioController;
+    [SerializeField] private GameObject backButton;
 
     // state
     private List<MenuPanel> panels; // Reference to the currently active panel configuration (landscape or portrait) based on device orientation
+    private List<PopupPanel> popups;
     private Stack<MenuPanelType> navigationStack = new Stack<MenuPanelType>(); // Navigation stack — enables automatic Back behaviour and Android back gesture
     private MenuPanelType currentPanel;
     private bool isTransitioning = false;
+
+    private PopupPanel activePopup = null;
+    private bool isPopupTransitioning = false;
 
     // Input System device reference
     private Keyboard keyboard;
 
     // Built once in Awake for O(1) panel access during transitions
     private Dictionary<MenuPanelType, MenuPanel> panelAccessDict;
+    private Dictionary<PopupType, PopupPanel> popupAccessDict;
 
     // Singleton - any button in the scene can reach the controller without a reference
     public static MenuNavigationController instance;
@@ -75,10 +103,21 @@ public class MenuNavigationController : MonoBehaviour
 
         instance = this;
 
-        panels = Screen.height > Screen.width ? portraitPanels : landscapePanels;
+        if (Screen.height > Screen.width)
+        {
+            panels = portraitPanels;
+            popups = portraitPopups;
+        }
+        else
+        {
+            panels = landscapePanels;
+            popups = landscapePopups;
+        }
 
         BuildAccessDict();
+        BuildPopupAccessDict();
         HideAllPanels();
+        HideAllPopups();
     }
 
     private void OnEnable()
@@ -110,17 +149,24 @@ public class MenuNavigationController : MonoBehaviour
         // PC - New Input System - Escape key
         if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
-            NavigateBack();
+            // Popups take priority over panel back navigation
+            if (activePopup != null)
+                ClosePopup();
+            else
+                NavigateBack();
             return;
         }
 
         // Android - New Input System - back gesture / button
         #if UNITY_ANDROID
-            if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
-            {
+        if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
+        {
+            if (activePopup != null)
+                ClosePopup();
+            else
                 NavigateBack();
-                return;
-            }
+            return;
+        }
         #endif
     }
 
@@ -143,6 +189,8 @@ public class MenuNavigationController : MonoBehaviour
         navigationStack.Push(currentPanel);
         PerformTransition(currentPanel, target, true);
         currentPanel = target;
+
+        backButton.SetActive(navigationStack.Count >= 1 ? true : false);
     }
 
     // Pop the stack and return to the previous panel
@@ -154,6 +202,8 @@ public class MenuNavigationController : MonoBehaviour
         MenuPanelType previousPanel = navigationStack.Pop();
         PerformTransition(currentPanel, previousPanel, false);
         currentPanel = previousPanel;
+
+        backButton.SetActive(navigationStack.Count >= 1 ? true : false);
     }
 
     // Navigate without pushing to stack — used for Results -> MainMenu so the
@@ -166,12 +216,13 @@ public class MenuNavigationController : MonoBehaviour
         navigationStack.Clear();
         PerformTransition(currentPanel, targetPanel, false);
         currentPanel = targetPanel;
+
+        backButton.SetActive(false);
     }
 
     // Wrapper methods for UnityEvents in buttons — these can be assigned directly in the Inspector without needing a separate script for each button
     public void NavigateToMainMenu() => NavigateToNewPanel(MenuPanelType.MainMenu);
     public void NavigateToGameModeSelector() => NavigateToNewPanel(MenuPanelType.GameModeSelector);
-    public void NavigateToDailyMissions() => NavigateToNewPanel(MenuPanelType.DailyMissions);
     public void NavigateToLootboxOpener() => NavigateToNewPanel(MenuPanelType.LootboxOpener);
     public void NavigateToResults() => NavigateToNewPanel(MenuPanelType.Results);
     public void NavigateAndClearStackMainMenu() => NavigateAndClearStack(MenuPanelType.MainMenu);
@@ -227,12 +278,122 @@ public class MenuNavigationController : MonoBehaviour
             });
     }
 
+    public void OpenPopup(PopupType type)
+    {
+        // Only one popup at a time - close current before opening new one
+        if (isPopupTransitioning || activePopup != null) return;
+
+        if (!popupAccessDict.TryGetValue(type, out PopupPanel popup)) return;
+
+        audioController?.PlayNavigationSound();
+        activePopup = popup;
+        PerformPopupOpen(popup);
+        backButton.SetActive(false);
+    }
+
+    public void ClosePopup()
+    {
+        if (isPopupTransitioning || activePopup == null) return;
+
+        audioController?.PlayBackSound();
+        PerformPopupClose(activePopup);
+        backButton.SetActive(navigationStack.Count >= 1 ? true : false);
+    }
+
+    // Wrapper methods for UnityEvents in buttons
+    public void OpenQuitGamePopup() => OpenPopup(PopupType.QuitGame);
+    public void OpenDailyMissionsPopup() => OpenPopup(PopupType.DailyMissions);
+    public void OpenLootboxRewardsPopup() => OpenPopup(PopupType.LootboxRewards);
+
+    // -------------------------------------------------------------------------
+    // Popup Transitions
+    // -------------------------------------------------------------------------
+
+    private void PerformPopupOpen(PopupPanel popup)
+    {
+        isPopupTransitioning = true;
+
+        float duration = ResolveValue(popup.durationOverride, defaultDuration);
+        float slideDistance = ResolveValue(popup.slideDistanceOverride, defaultSlideDistance);
+
+        RectTransform popupRect = popup.popupObject.GetComponent<RectTransform>();
+        CanvasGroup popupCG = GetOrAddCanvasGroup(popup.popupObject);
+
+        // Prepare popup state before activating
+        Vector2 incomingStart = GetSlideVector(popup.slideFrom, true) * slideDistance;
+        popupRect.anchoredPosition = incomingStart;
+        popupCG.alpha = 0f;
+        popup.popupObject.SetActive(true);
+
+        // Fade in overlay if assigned
+        if (popup.overlayObject != null)
+        {
+            CanvasGroup overlayCG = GetOrAddCanvasGroup(popup.overlayObject);
+            overlayCG.alpha = 0f;
+            popup.overlayObject.SetActive(true);
+            overlayCG.DOFade(overlayMaxAlpha, overlayFadeDuration).SetEase(defaultFadeEase);
+        }
+
+        // Kill any tweens already running on the popup
+        popupRect.DOKill();
+        popupCG.DOKill();
+
+        // Slide in + fade in
+        popupRect.DOAnchorPos(Vector2.zero, duration).SetEase(defaultSlideEase);
+        popupCG.DOFade(1f, duration).SetEase(defaultFadeEase)
+            .OnComplete(() => isPopupTransitioning = false);
+    }
+
+    private void PerformPopupClose(PopupPanel popup)
+    {
+        isPopupTransitioning = true;
+
+        float duration = ResolveValue(popup.durationOverride, defaultDuration);
+        float slideDistance = ResolveValue(popup.slideDistanceOverride, defaultSlideDistance);
+
+        RectTransform popupRect = popup.popupObject.GetComponent<RectTransform>();
+        CanvasGroup popupCG = GetOrAddCanvasGroup(popup.popupObject);
+
+        Vector2 outgoingEnd = GetSlideVector(popup.slideFrom, true) * slideDistance;
+
+        // Kill any tweens already running
+        popupRect.DOKill();
+        popupCG.DOKill();
+
+        // Fade out overlay if assigned
+        if (popup.overlayObject != null)
+        {
+            CanvasGroup overlayCG = GetOrAddCanvasGroup(popup.overlayObject);
+            overlayCG.DOFade(0f, overlayFadeDuration).SetEase(defaultFadeEase)
+                .OnComplete(() => popup.overlayObject.SetActive(false));
+        }
+
+        // Slide out + fade out
+        popupRect.DOAnchorPos(outgoingEnd, duration).SetEase(defaultSlideEase);
+        popupCG.DOFade(0f, duration).SetEase(defaultFadeEase)
+            .OnComplete(() =>
+            {
+                popup.popupObject.SetActive(false);
+                popupRect.anchoredPosition = Vector2.zero;
+                popupCG.alpha = 1f;
+                activePopup = null;
+                isPopupTransitioning = false;
+            });
+    }
+
     // Helpers
     private void BuildAccessDict()
     {
         panelAccessDict = new Dictionary<MenuPanelType, MenuPanel>();
         foreach (MenuPanel config in panels)
             panelAccessDict[config.panelType] = config;
+    }
+
+    private void BuildPopupAccessDict()
+    {
+        popupAccessDict = new Dictionary<PopupType, PopupPanel>();
+        foreach (PopupPanel popup in popups)
+            popupAccessDict[popup.popupType] = popup;
     }
 
     private void HideAllPanels()
@@ -242,6 +403,21 @@ public class MenuNavigationController : MonoBehaviour
             config.panelObject.SetActive(false);
             CanvasGroup cg = GetOrAddCanvasGroup(config.panelObject);
             cg.alpha = 1f;
+        }
+    }
+
+    private void HideAllPopups()
+    {
+        foreach (PopupPanel popup in popups)
+        {
+            popup.popupObject.SetActive(false);
+            GetOrAddCanvasGroup(popup.popupObject).alpha = 1f;
+
+            if (popup.overlayObject != null)
+            {
+                popup.overlayObject.SetActive(false);
+                GetOrAddCanvasGroup(popup.overlayObject).alpha = 0f;
+            }
         }
     }
 
