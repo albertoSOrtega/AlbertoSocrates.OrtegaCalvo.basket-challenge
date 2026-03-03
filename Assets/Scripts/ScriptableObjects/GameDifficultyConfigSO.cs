@@ -35,4 +35,8 @@ public class GameDifficultyConfigSO : ScriptableObject
     [Header("Fireball")]
     public float perfectShotFillRate = 0.25f;
     public float otherScoredShotFillRate = 0.15f;
+
+    [Header("Difficulty Rewards")]
+    public int moneyReward = 50;
+    public bool bagReward = true;
 }

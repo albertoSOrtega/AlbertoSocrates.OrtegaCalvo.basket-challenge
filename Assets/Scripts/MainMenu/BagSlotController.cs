@@ -18,6 +18,11 @@ public class BagSlotController : MonoBehaviour
         button = GetComponent<Button>();
     }
 
+    public bool IsActive()
+    {
+        return isActive;
+    }
+
     public void ActivateBagSlot()
     {
         button.enabled = true;

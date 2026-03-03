@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab827463e8671f145a1aeded5a39638a, type: 3}
   m_Name: MatchResult
   m_EditorClassIdentifier: 
-  playerScore: 74
-  cpuScore: 22
+  playerScore: 20
+  cpuScore: 1
   hasResult: 1

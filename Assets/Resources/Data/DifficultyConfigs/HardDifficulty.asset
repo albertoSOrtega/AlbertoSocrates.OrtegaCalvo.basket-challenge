@@ -28,3 +28,5 @@ MonoBehaviour:
   matchDuration: 70
   perfectShotFillRate: 0.25
   otherScoredShotFillRate: 0.15
+  moneyReward: 100
+  bagReward: 1
