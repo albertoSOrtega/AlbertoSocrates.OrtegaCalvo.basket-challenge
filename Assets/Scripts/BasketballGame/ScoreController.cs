@@ -20,6 +20,7 @@ public class ScoreController : MonoBehaviour
     // State
     public int PlayerScore  { get; private set; }
     public int CpuScore { get; private set; }
+    public int LastScoredPoints { get; private set; }
     private int currentBackboardBonus = 0;
 
     public void ResetScores()
@@ -33,6 +34,8 @@ public class ScoreController : MonoBehaviour
     {
         int points = CalculatePoints(entity, shotType);
         if (points == 0) return;
+
+        LastScoredPoints = points;
 
         if (entity == GameEntity.Player)
             PlayerScore += points;
