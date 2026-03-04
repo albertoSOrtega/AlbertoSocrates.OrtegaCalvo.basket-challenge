@@ -17,6 +17,10 @@ public class CardController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currencyText;
     [SerializeField] private int currencyAmount;
 
+    [Header("Currency Config and Refs")]
+    [SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
+    [SerializeField] private bool isMoney; 
+
     // References
     private Image cardImage;
 
@@ -65,7 +69,16 @@ public class CardController : MonoBehaviour
     {
         if (currencyText == null) return; // no currency to increase
 
-        currencyText.text = (System.Convert.ToInt32(currencyText.text) + currencyAmount).ToString();
+        if (isMoney)
+        {
+            currentSessionCurrencySO.money += currencyAmount;
+            currencyText.text = currentSessionCurrencySO.money.ToString();
+        }
+        else
+        {
+            currentSessionCurrencySO.gold += currencyAmount;
+            currencyText.text = currentSessionCurrencySO.gold.ToString();
+        }
     }
 
     public void ResetCard()

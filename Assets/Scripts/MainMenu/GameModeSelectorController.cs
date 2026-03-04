@@ -1,6 +1,5 @@
 using DG.Tweening;
 using UnityEngine;
-using static UnityEngine.InputSystem.InputControlScheme;
 
 public class GameModeSelectorController : MonoBehaviour
 {
@@ -9,6 +8,8 @@ public class GameModeSelectorController : MonoBehaviour
     [SerializeField] private GameDifficultyConfigSO easyConfig;
     [SerializeField] private GameDifficultyConfigSO mediumConfig;
     [SerializeField] private GameDifficultyConfigSO hardConfig;
+    [SerializeField] private CurrentSessionCurrencySO SO1; // debug
+    [SerializeField] private DailyMissionsSO SO2; // debug
 
     public void StartEasyGame() => StartGame(easyConfig);
     public void StartNormalGame() => StartGame(mediumConfig);
@@ -18,7 +19,7 @@ public class GameModeSelectorController : MonoBehaviour
     {
         DOTween.KillAll();
         matchResult?.Clear();
-        selectedDifficulty.Select(config);
+        selectedDifficulty.config = config;
         UnityEngine.SceneManagement.SceneManager.LoadScene("BasketballGame");
     }
 }
