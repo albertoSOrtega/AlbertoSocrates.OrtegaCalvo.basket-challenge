@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.UI;
 
 public class LootboxOpenerController : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class LootboxOpenerController : MonoBehaviour
 
     private void OnEnable()
     {
+        GetComponent<Button>().enabled = true;
         ResetBag();
         ResetCards();
     }
@@ -32,6 +34,7 @@ public class LootboxOpenerController : MonoBehaviour
     {
         OpenBag();
         ShowRewardsPopup();
+        GetComponent<Button>().enabled = false;
     }
 
     private void OpenBag()
