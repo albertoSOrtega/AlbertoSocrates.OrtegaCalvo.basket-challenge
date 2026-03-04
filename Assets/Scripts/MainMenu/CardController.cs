@@ -18,7 +18,6 @@ public class CardController : MonoBehaviour
     [SerializeField] private int currencyAmount;
 
     [Header("Currency Config and Refs")]
-    //[SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
     [SerializeField] private bool isMoney; 
 
     // References

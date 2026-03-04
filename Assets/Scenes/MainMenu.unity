@@ -3745,6 +3745,7 @@ MonoBehaviour:
   - {fileID: 1419643099}
   rewardMoneyText: {fileID: 973312292}
   rewardBag: {fileID: 526811923}
+  rewardMoney: {fileID: 2058340210}
   mainMenuRef: {fileID: 1685701530}
 --- !u!1 &462419028
 GameObject:
@@ -11773,7 +11774,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moneyText: {fileID: 851106351}
   goldText: {fileID: 1242999426}
-  currentSessionCurrencySO: {fileID: 11400000, guid: 9e6c41bbba4ec2141995b2516589556e, type: 2}
+  dailyMissionsSlider: {fileID: 2045923875}
+  dailyMissionsSliderText: {fileID: 426279431}
 --- !u!1 &1688360182
 GameObject:
   m_ObjectHideFlags: 0
@@ -11933,10 +11935,8 @@ MonoBehaviour:
   dailyMissionsGeneralSlider: {fileID: 2045923875}
   dailyMissionSliderText: {fileID: 1004299016}
   dailyMissionsGeneralSliderText: {fileID: 426279431}
-  currentDailyMissionsSO: {fileID: 11400000, guid: 7272a366431989844bfa64b10de1ff3f, type: 2}
   dailyMissionButton: {fileID: 1688360184}
   rewardImage: {fileID: 214104210}
-  currentSessionCurrencySO: {fileID: 11400000, guid: 9e6c41bbba4ec2141995b2516589556e, type: 2}
   currencyAmount: 25
   missionIndex: 0
   isMoney: 1
@@ -13194,10 +13194,8 @@ MonoBehaviour:
   dailyMissionsGeneralSlider: {fileID: 2045923875}
   dailyMissionSliderText: {fileID: 185359284}
   dailyMissionsGeneralSliderText: {fileID: 426279431}
-  currentDailyMissionsSO: {fileID: 11400000, guid: 7272a366431989844bfa64b10de1ff3f, type: 2}
   dailyMissionButton: {fileID: 1852771757}
   rewardImage: {fileID: 1978726768}
-  currentSessionCurrencySO: {fileID: 11400000, guid: 9e6c41bbba4ec2141995b2516589556e, type: 2}
   currencyAmount: 50
   missionIndex: 1
   isMoney: 1
@@ -16564,10 +16562,8 @@ MonoBehaviour:
   dailyMissionsGeneralSlider: {fileID: 2045923875}
   dailyMissionSliderText: {fileID: 1688371641}
   dailyMissionsGeneralSliderText: {fileID: 426279431}
-  currentDailyMissionsSO: {fileID: 11400000, guid: 7272a366431989844bfa64b10de1ff3f, type: 2}
   dailyMissionButton: {fileID: 2099771162}
   rewardImage: {fileID: 389895294}
-  currentSessionCurrencySO: {fileID: 11400000, guid: 9e6c41bbba4ec2141995b2516589556e, type: 2}
   currencyAmount: 1
   missionIndex: 2
   isMoney: 0

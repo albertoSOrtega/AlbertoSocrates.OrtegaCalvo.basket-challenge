@@ -9,8 +9,6 @@ public class MatchResultsPanelController : MonoBehaviour
     [Header("ScriptableObject")]
     [SerializeField] private MatchResultSO matchResult;
     [SerializeField] private SelectedDifficultySO selectedDifficultySO;
-    //[SerializeField] private DailyMissionsSO currentDailyMissionsSO;
-    //[SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
 
     [Header("Score UI References")]
     [SerializeField] private TextMeshProUGUI playerScoreText;
@@ -31,6 +29,7 @@ public class MatchResultsPanelController : MonoBehaviour
     [SerializeField] private List<BagSlotController> bags;
     [SerializeField] private TextMeshProUGUI rewardMoneyText;
     [SerializeField] private GameObject rewardBag;
+    [SerializeField] private GameObject rewardMoney;
 
     [Header("Other References")]
     [SerializeField] private GameObject mainMenuRef;
@@ -50,7 +49,17 @@ public class MatchResultsPanelController : MonoBehaviour
         playerScoreText.text = matchResult.playerScore.ToString();
         cpuScoreText.text = matchResult.cpuScore.ToString();
 
-        UpdateRewards();
+        if (matchResult.playerScore > matchResult.cpuScore)
+        {
+            UpdateRewards();
+        }
+        else
+        {
+            rewardBag.SetActive(false);
+            rewardMoney.SetActive(false);
+        }
+
+        CheckDailyMissions();
 
         moneyText.text = currency.money.ToString();
         goldText.text = currency.gold.ToString();
@@ -108,7 +117,12 @@ public class MatchResultsPanelController : MonoBehaviour
                     break;
                 }
             }
-        }
+        }    
+    }
+
+    public void CheckDailyMissions()
+    {
+        var daily = SessionState.I.daily;
 
         // Daily mission section
         for (int i = 0; i < daily.missionsDone.Count; i++)

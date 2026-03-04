@@ -13,10 +13,8 @@ public class DailyMissionController : MonoBehaviour
     [SerializeField] private Slider dailyMissionsGeneralSlider;
     [SerializeField] private TextMeshProUGUI dailyMissionSliderText;
     [SerializeField] private TextMeshProUGUI dailyMissionsGeneralSliderText;
-    [SerializeField] private DailyMissionsSO currentDailyMissionsSO;
     [SerializeField] private Button dailyMissionButton;
     [SerializeField] private GameObject rewardImage;
-    [SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
 
     [Header("Daily Mission Configuration")]
     [SerializeField] private int currencyAmount;
