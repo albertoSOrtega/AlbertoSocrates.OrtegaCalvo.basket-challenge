@@ -22,6 +22,7 @@ public class GameController : MonoBehaviour
     public event System.Action OnBackboardBonusActivated;
     public event System.Action OnBackboardBonusReset;
     public event System.Action<ShotType, int> OnPlayerScored;
+    public event System.Action OnCPUScored;
 
     [Header("Bonus Configuration")]
     [SerializeField] private int[] backboardBonusValues = { 2, 4, 6 };
@@ -77,6 +78,11 @@ public class GameController : MonoBehaviour
         {
             fireballController.HandlePlayerBasketScored(shotType);
             OnPlayerScored?.Invoke(shotType, scoreController.LastScoredPoints);
+        }
+
+        if (scoredEntity == GameEntity.CPU)
+        {
+            OnCPUScored?.Invoke();
         }
 
         if (isBonusActive && shotType == ShotType.PerfectBackboard)
