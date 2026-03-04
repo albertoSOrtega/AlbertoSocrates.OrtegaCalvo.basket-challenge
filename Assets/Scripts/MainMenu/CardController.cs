@@ -18,7 +18,7 @@ public class CardController : MonoBehaviour
     [SerializeField] private int currencyAmount;
 
     [Header("Currency Config and Refs")]
-    [SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
+    //[SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
     [SerializeField] private bool isMoney; 
 
     // References
@@ -67,17 +67,18 @@ public class CardController : MonoBehaviour
 
     private void IncreaseCurrencyAmount()
     {
-        if (currencyText == null) return; // no currency to increase
+        if (currencyText == null) return;
+        var currency = SessionState.I.currency;
 
         if (isMoney)
         {
-            currentSessionCurrencySO.money += currencyAmount;
-            currencyText.text = currentSessionCurrencySO.money.ToString();
+            currency.money += currencyAmount;
+            currencyText.text = currency.money.ToString();
         }
         else
         {
-            currentSessionCurrencySO.gold += currencyAmount;
-            currencyText.text = currentSessionCurrencySO.gold.ToString();
+            currency.gold += currencyAmount;
+            currencyText.text = currency.gold.ToString();
         }
     }
 

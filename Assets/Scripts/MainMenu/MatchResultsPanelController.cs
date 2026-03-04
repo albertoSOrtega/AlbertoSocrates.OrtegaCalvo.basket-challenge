@@ -9,8 +9,8 @@ public class MatchResultsPanelController : MonoBehaviour
     [Header("ScriptableObject")]
     [SerializeField] private MatchResultSO matchResult;
     [SerializeField] private SelectedDifficultySO selectedDifficultySO;
-    [SerializeField] private DailyMissionsSO currentDailyMissionsSO;
-    [SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
+    //[SerializeField] private DailyMissionsSO currentDailyMissionsSO;
+    //[SerializeField] private CurrentSessionCurrencySO currentSessionCurrencySO;
 
     [Header("Score UI References")]
     [SerializeField] private TextMeshProUGUI playerScoreText;
@@ -43,14 +43,17 @@ public class MatchResultsPanelController : MonoBehaviour
 
     private void DisplayResult()
     {
+        var daily = SessionState.I.daily;
+        var currency = SessionState.I.currency;
+
         // Scores
         playerScoreText.text = matchResult.playerScore.ToString();
         cpuScoreText.text = matchResult.cpuScore.ToString();
 
         UpdateRewards();
 
-        moneyText.text = currentSessionCurrencySO.money.ToString();
-        goldText.text = currentSessionCurrencySO.gold.ToString();
+        moneyText.text = currency.money.ToString();
+        goldText.text = currency.gold.ToString();
 
         playerWinnerImage.SetActive(false);
         cpuWinnerImage.SetActive(false);
@@ -80,13 +83,15 @@ public class MatchResultsPanelController : MonoBehaviour
 
     private void UpdateRewards()
     {
+        var daily = SessionState.I.daily;
+        var currency = SessionState.I.currency;
+
         GameDifficultyConfigSO selectedGameDifficulty = selectedDifficultySO.config;
 
-        // Result rewards section
         rewardMoneyText.text = selectedGameDifficulty.moneyReward.ToString();
 
-        currentSessionCurrencySO.money += selectedGameDifficulty.moneyReward;
-        moneyText.text = currentSessionCurrencySO.money.ToString();
+        currency.money += selectedGameDifficulty.moneyReward;
+        moneyText.text = currency.money.ToString();
 
         // Enable main menu momentarily to ensure bag reward is displayed if applicable, then disable it again to show the results panel
         mainMenuRef.SetActive(true);
@@ -106,12 +111,12 @@ public class MatchResultsPanelController : MonoBehaviour
         }
 
         // Daily mission section
-        for (int i = 0; i < currentDailyMissionsSO.missionsDone.Count; i++)
+        for (int i = 0; i < daily.missionsDone.Count; i++)
         {
-            if (!currentDailyMissionsSO.missionsDone[i]) 
+            if (!daily.missionsDone[i])
             {
-                currentDailyMissionsSO.missionsDone[i] = true; // Flip it
-                break; 
+                daily.missionsDone[i] = true;
+                break;
             }
         }
     }

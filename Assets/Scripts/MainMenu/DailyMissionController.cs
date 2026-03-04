@@ -26,14 +26,16 @@ public class DailyMissionController : MonoBehaviour
 
     private void OnEnable()
     {
+        var daily = SessionState.I.daily;
+
         dailyMissionButton.enabled = false;
 
-        if (currentDailyMissionsSO.missionsDone[missionIndex])
+        if (daily.missionsDone[missionIndex])
         {
             dailyMissionSlider.value = 1f;
             dailyMissionSliderText.text = "1/1";
 
-            if (!currentDailyMissionsSO.rewardsClaimed[missionIndex])
+            if (!daily.rewardsClaimed[missionIndex])
             {
                 dailyMissionButton.enabled = true;
                 rewardImage.SetActive(true);
@@ -47,25 +49,26 @@ public class DailyMissionController : MonoBehaviour
 
     public void OnRewardClicked()
     {
-        currentDailyMissionsSO.rewardsClaimed[missionIndex] = true;
+        var daily = SessionState.I.daily;
+        var currency = SessionState.I.currency;
+
+        daily.rewardsClaimed[missionIndex] = true;
 
         if (isMoney)
         {
-            currentSessionCurrencySO.money += currencyAmount;
-            currencyText.text = currentSessionCurrencySO.money.ToString();
+            currency.money += currencyAmount;
+            currencyText.text = currency.money.ToString();
         }
         else
         {
-            currentSessionCurrencySO.gold += currencyAmount;
-            currencyText.text = currentSessionCurrencySO.gold.ToString();
+            currency.gold += currencyAmount;
+            currencyText.text = currency.gold.ToString();
         }
 
         int count = 0;
-        foreach (bool val in currentDailyMissionsSO.rewardsClaimed)
-        {
+        foreach (bool val in daily.rewardsClaimed)
             if (val) count++;
-        }
-        
+
         float ratioMissionsDone = (float)count / 3f;
         dailyMissionsGeneralSlider.value = ratioMissionsDone;
         dailyMissionsGeneralSliderText.text = $"{count}/3";
@@ -82,7 +85,8 @@ public class DailyMissionController : MonoBehaviour
     private void ActivateBag()
     {
 
-        currentDailyMissionsSO.bagRewardClaimed = true;
+        var daily = SessionState.I.daily;
+        daily.bagRewardClaimed = true;
 
         foreach (BagSlotController bag in bags)
         {

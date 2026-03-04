@@ -16,8 +16,9 @@ public class MainMenuController : MonoBehaviour
 
     private void OnEnable()
     {
-        moneyText.text = currentSessionCurrencySO.money.ToString();
-        goldText.text = currentSessionCurrencySO.gold.ToString();
+        var currency = SessionState.I.currency;
+        moneyText.text = currency.money.ToString();
+        goldText.text = currency.gold.ToString();
     }
 
     // Start is called before the first frame update
