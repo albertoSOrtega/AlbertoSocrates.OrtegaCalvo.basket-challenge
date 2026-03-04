@@ -21,6 +21,7 @@ public class GameController : MonoBehaviour
     // Events
     public event System.Action OnBackboardBonusActivated;
     public event System.Action OnBackboardBonusReset;
+    public event System.Action<ShotType, int> OnPlayerScored;
 
     [Header("Bonus Configuration")]
     [SerializeField] private int[] backboardBonusValues = { 2, 4, 6 };
@@ -70,23 +71,18 @@ public class GameController : MonoBehaviour
     private void HandleBasketScored(ShotType shotType, GameEntity scoredEntity)
     {
 
-        // this is just if we don't want to count the last basket scored after the match has ended
-        //if (!gameTimerController.IsMatchActive) return;
-
         scoreController.AddScore(scoredEntity, shotType);
 
-        // After the Score, so the basket that activates the bonus do not receive the bonus
         if (scoredEntity == GameEntity.Player)
+        {
             fireballController.HandlePlayerBasketScored(shotType);
+            OnPlayerScored?.Invoke(shotType, scoreController.LastScoredPoints);
+        }
 
         if (isBonusActive && shotType == ShotType.PerfectBackboard)
-        {
             ResetBackboardBonus();
-        }
         else if (isBonusReady && !isBonusActive)
-        {
             ActivateBonus();
-        }
     }
 
     // For detecting possible missed shots after the player completes a shot - It would drain the fireball bar

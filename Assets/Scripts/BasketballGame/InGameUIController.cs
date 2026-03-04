@@ -46,6 +46,7 @@ public class InGameUIController : MonoBehaviour
     public SelectedDifficultySO selectedDifficulty;
     public ThrowBallInputHandler throwBallInputHandler;
     public PauseController pauseController;
+    public GameController gameController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -67,6 +68,10 @@ public class InGameUIController : MonoBehaviour
     private Image playerTimerFillImage;
     private Image cpuTimerFillImage;
     private TextMeshProUGUI moneyQuantity;
+
+    private static readonly Color ColorPerfect = new Color(0.2f, 0.9f, 0.2f);
+    private static readonly Color ColorImperfect = new Color(1f, 0.85f, 0f);
+    private static readonly Color ColorBackboardBonus = new Color(0f, 0.9f, 0.85f);
 
     private void Awake()
     {
@@ -93,8 +98,6 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnInputEnabledNextFrame += ResetAfterShot;
         throwBallInputHandler.OnInputEnabledNextFrame += InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged += UpdateSlider;
-        throwBallInputHandler.OnShootReleased += UIHandleShoot;
-        throwBallInputHandler.OnSwipeCancelled += UIHandleCancelShoot;
 
         // Subscribe to the events of the ScoreController
         scoreController.OnScoreUpdated += UpdateScore;
@@ -105,6 +108,8 @@ public class InGameUIController : MonoBehaviour
         fireballController.OnBarValueChanged += UpdateFireballBar;
         fireballController.OnFireballBonusActivated += ActivateFireballBonusVisuals;
         fireballController.OnFireballBonusDeactivated += DeactivateFireballBonusVisuals;
+
+        gameController.OnPlayerScored += HandlePlayerScored;
     }
 
     private void OnDisable()
@@ -113,8 +118,6 @@ public class InGameUIController : MonoBehaviour
         throwBallInputHandler.OnInputEnabledNextFrame -= ResetAfterShot;
         throwBallInputHandler.OnInputEnabledNextFrame -= InitializeZoneRects;
         throwBallInputHandler.OnShootPowerChanged -= UpdateSlider;
-        throwBallInputHandler.OnShootReleased -= UIHandleShoot;
-        throwBallInputHandler.OnSwipeCancelled -= UIHandleCancelShoot;
 
         // Unsubscribe to the events of the ScoreController
         scoreController.OnScoreUpdated -= UpdateScore;
@@ -125,49 +128,8 @@ public class InGameUIController : MonoBehaviour
         fireballController.OnBarValueChanged -= UpdateFireballBar;
         fireballController.OnFireballBonusActivated -= ActivateFireballBonusVisuals;
         fireballController.OnFireballBonusDeactivated -= DeactivateFireballBonusVisuals;
-    }
 
-    public void UIHandleShoot(float shootPower)
-    {
-        shootText.DOKill();
-        shootText.alpha = 1f; // Reset alpha to fully visible
-
-        ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
-
-        switch (shotType)
-        {
-            case ShotType.Perfect:
-                shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
-                break;
-            case ShotType.Imperfect:
-                shootText.text = $"Shooting Imperfect Shot with this power: {shootPower}";
-                break;
-            case ShotType.Short:
-                shootText.text = $"Short Shot, You Failed! {shootPower}";
-                break;
-            case ShotType.PerfectBackboard:
-                shootText.text = $"Perfect backboard shot! {shootPower}";
-                break;
-            case ShotType.LowerBackboard:
-                shootText.text = $"Lower backboad shot, you failed {shootPower}";
-                break;
-            case ShotType.UpperBackboard:
-                shootText.text = $"upper backboard shot, you failed {shootPower}";
-                break;
-            default:
-                shootText.text = $"Shooting Perfect Shot with this power: {shootPower}";
-                break;
-        }
-        
-        shootText.DOFade(0, 2f);
-    }
-
-    public void UIHandleCancelShoot(float shootPower)
-    {
-        shootText.DOKill();
-        shootText.alpha = 1f; // Reset alpha to fully visible
-        shootText.text = $"Shoot cancelled with this power: {shootPower}";
-        shootText.DOFade(0, 2f);
+        gameController.OnPlayerScored -= HandlePlayerScored;
     }
 
     public void UpdateSlider(float shootPower)
@@ -301,6 +263,35 @@ public class InGameUIController : MonoBehaviour
     public void OnPauseButtonPressed()
     {
         pauseController.TogglePause();
+    }
+
+    private void HandlePlayerScored(ShotType shotType, int points)
+    {
+        shootText.DOKill();
+        shootText.alpha = 1f;
+
+        switch (shotType)
+        {
+            case ShotType.Perfect:
+                shootText.text = $"Perfect Shot! +{points} Points";
+                shootText.color = ColorPerfect;
+                break;
+
+            case ShotType.Imperfect:
+                shootText.text = $"2 Point Shot! +{points} Points";
+                shootText.color = ColorImperfect;
+                break;
+
+            case ShotType.PerfectBackboard:
+                bool hasBonus = points > 2;
+                shootText.text = hasBonus
+                    ? $"Bonus Shot! +{points} Points"
+                    : $"2 Point Shot! +{points} Points";
+                shootText.color = hasBonus ? ColorBackboardBonus : ColorImperfect;
+                break;
+        }
+
+        shootText.DOFade(0f, 2f);
     }
 
     // Start is called before the first frame update
