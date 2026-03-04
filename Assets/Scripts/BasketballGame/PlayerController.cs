@@ -7,13 +7,14 @@ public class PlayerController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform rimTransformReference;
     [SerializeField] private CameraController cameraController;
+    [SerializeField] private FireballController fireballController;
 
     // Reference to components
     private ThrowBallInputHandler throwBallInputHandler;
     private BallShooterController ballShooterController;
     private ShootingBarZoneController shootingBarZoneController;
     private ShootingPositionController shootingPositionController;
-
+    
     [Header("Ball Spawn Configuration")]
     [SerializeField] private float ballSpawnForwardDistance = 0.5f;
     [SerializeField] private float playerY = 1f;
@@ -35,6 +36,8 @@ public class PlayerController : MonoBehaviour
         throwBallInputHandler.OnShootReleased += HandleShootReleased;
         ballShooterController.OnShotCompleted += HandleShotCompleted;
         shootingPositionController.OnNewRoundGenerated += SetupPlayerInPosition;
+        fireballController.OnFireballBonusActivated += HandleFireballActivated;
+        fireballController.OnFireballBonusDeactivated += HandleFireballDeactivated;
     }
 
     private void OnDisable()
@@ -42,6 +45,8 @@ public class PlayerController : MonoBehaviour
         throwBallInputHandler.OnShootReleased -= HandleShootReleased;
         ballShooterController.OnShotCompleted -= HandleShotCompleted;
         shootingPositionController.OnNewRoundGenerated -= SetupPlayerInPosition;
+        fireballController.OnFireballBonusActivated -= HandleFireballActivated;
+        fireballController.OnFireballBonusDeactivated -= HandleFireballDeactivated;
     }
 
     // Wrapper to pass the information to the PlayerJumpAndShoot coroutine, since the event doesn't receive the shot type directly
@@ -112,6 +117,12 @@ public class PlayerController : MonoBehaviour
 
         ballShooterController.SetBall(currentBall.transform, GameEntity.Player);
 
+        // Active the fireball effects if the bonus is active when the ball is spawned
+        if (fireballController.GetIsFireballBonusActive())
+        {
+            currentBall.GetComponent<FireballBallController>()?.ActivateEffects();
+        }
+
         Debug.Log($"Ball spawned at: {currentBall.transform.position}");
     }
 
@@ -145,6 +156,18 @@ public class PlayerController : MonoBehaviour
                 ballShooterController.StartUpperBackboardShot();
                 break;
         }
+    }
+
+    private void HandleFireballActivated()
+    {
+        if (currentBall == null) return;
+        currentBall.GetComponent<FireballBallController>()?.ActivateEffects();
+    }
+
+    private void HandleFireballDeactivated()
+    {
+        if (currentBall == null) return;
+        currentBall.GetComponent<FireballBallController>()?.DeactivateEffects();
     }
 
 }

@@ -29,11 +29,9 @@ public class BasketParticleController : MonoBehaviour
             case ShotType.Perfect:
                 PlayParticle(particlePerfect);
                 break;
-
             case ShotType.Imperfect:
                 PlayParticle(particle2Points);
                 break;
-
             case ShotType.PerfectBackboard:
                 bool hasBonus = points > 2;
                 PlayParticle(hasBonus ? particleBonus : particle2Points);
