@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 // Single Responsibility: distributes difficulty configuration to all controllers

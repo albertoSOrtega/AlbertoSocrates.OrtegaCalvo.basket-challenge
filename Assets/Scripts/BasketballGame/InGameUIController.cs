@@ -10,6 +10,8 @@ public class InGameUIController : MonoBehaviour
     [Header("Landscape UI References")]
     [SerializeField] private Slider shootPowerSlider_LS;
     [SerializeField] private Slider fireballSlider_LS;
+    [SerializeField] private Image sliderFire_LS;
+    [SerializeField] private GameObject timesTwo_LS;
     [SerializeField] private TextMeshProUGUI shootText_LS;
     [SerializeField] private TextMeshProUGUI playerScoreText_LS;
     [SerializeField] private TextMeshProUGUI cpuScoreText_LS;
@@ -18,10 +20,13 @@ public class InGameUIController : MonoBehaviour
     [SerializeField] private Image backboardZoneImage_LS;
     [SerializeField] private Image playerTimerFillImage_LS;
     [SerializeField] private Image cpuTimerFillImage_LS;
+    [SerializeField] private TextMeshProUGUI moneyQuantity_LS;
 
     [Header("Portrait UI References")]
     [SerializeField] private Slider shootPowerSlider_PT;
     [SerializeField] private Slider fireballSlider_PT;
+    [SerializeField] private Image sliderFire_PT;
+    [SerializeField] private GameObject timesTwo_PT;
     [SerializeField] private TextMeshProUGUI shootText_PT;
     [SerializeField] private TextMeshProUGUI playerScoreText_PT;
     [SerializeField] private TextMeshProUGUI cpuScoreText_PT;
@@ -30,6 +35,7 @@ public class InGameUIController : MonoBehaviour
     [SerializeField] private Image backboardZoneImage_PT;
     [SerializeField] private Image playerTimerFillImage_PT;
     [SerializeField] private Image cpuTimerFillImage_PT;
+    [SerializeField] private TextMeshProUGUI moneyQuantity_PT;
 
     [Header("Controller References")]
     public ShootingBarZoneController shootingBarZoneController;
@@ -37,6 +43,8 @@ public class InGameUIController : MonoBehaviour
     public ScoreController scoreController;
     public GameTimerController gameTimerController;
     public FireballController fireballController;
+    public SelectedDifficultySO selectedDifficulty;
+    public ThrowBallInputHandler throwBallInputHandler;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -45,17 +53,19 @@ public class InGameUIController : MonoBehaviour
     public Color inBackboardZoneColor = new Color(1f, 0f, 0.7f, 1f);
 
     // Intern active references (point to the correct orientation ones at runtime)
-    public Slider shootPowerSlider;
+    private Slider shootPowerSlider;
     private Slider fireballSlider;
-    public TextMeshProUGUI shootText;
-    public TextMeshProUGUI playerScoreText;
-    public TextMeshProUGUI cpuScoreText;
+    private Image sliderFire;
+    private GameObject timesTwo;
+    private TextMeshProUGUI shootText;
+    private TextMeshProUGUI playerScoreText;
+    private TextMeshProUGUI cpuScoreText;
     //public TextMeshProUGUI timerText;
-    public ThrowBallInputHandler throwBallInputHandler;
-    public Image perfectZoneImage;
-    public Image backboardZoneImage;
-    public Image playerTimerFillImage;
-    public Image cpuTimerFillImage;
+    private Image perfectZoneImage;
+    private Image backboardZoneImage;
+    private Image playerTimerFillImage;
+    private Image cpuTimerFillImage;
+    private TextMeshProUGUI moneyQuantity;
 
     private void Awake()
     {
@@ -71,6 +81,9 @@ public class InGameUIController : MonoBehaviour
         backboardZoneImage = isPortrait ? backboardZoneImage_PT : backboardZoneImage_LS;
         playerTimerFillImage = isPortrait ? playerTimerFillImage_PT : playerTimerFillImage_LS;
         cpuTimerFillImage = isPortrait ? cpuTimerFillImage_PT : cpuTimerFillImage_LS;
+        moneyQuantity = isPortrait ? moneyQuantity_PT : moneyQuantity_LS;
+        sliderFire = isPortrait ? sliderFire_PT : sliderFire_LS;
+        timesTwo = isPortrait ? timesTwo_PT : timesTwo_LS;
     }
 
     private void OnEnable()
@@ -245,12 +258,43 @@ public class InGameUIController : MonoBehaviour
 
     private void ActivateFireballBonusVisuals()
     {
-        fireballSlider.fillRect.GetComponent<Image>().color = Color.red; // Change color to indicate bonus
+        Color orangeColor = new Color32(238, 137, 0, 255);
+        fireballSlider.fillRect.GetComponent<Image>().color = orangeColor; // Change color to indicate bonus
+        sliderFire.color = orangeColor; // Make the fire icon more vibrant
+        timesTwo.SetActive(true); // Show the "x2" icon
+
+        // Animate x2
+        RectTransform timesTwoRect = timesTwo.GetComponent<RectTransform>();
+
+        // Resetea antes de lanzar por si quedó en un estado intermedio
+        timesTwoRect.localScale = Vector3.one;
+        timesTwoRect.localRotation = Quaternion.identity;
+
+        // Vibration
+        timesTwoRect.localRotation = Quaternion.Euler(0f, 0f, -15f);
+        timesTwoRect.DORotate(new Vector3(0f, 0f, 15f), 0.4f)
+                   .SetEase(Ease.InOutSine)
+                   .SetLoops(-1, LoopType.Yoyo);
+
+        // Scaling
+        timesTwoRect.DOScale(1.2f, 0.4f)
+                   .SetEase(Ease.InOutSine)
+                   .SetLoops(-1, LoopType.Yoyo);
     }
 
     private void DeactivateFireballBonusVisuals()
     {
-        fireballSlider.fillRect.GetComponent<Image>().color = Color.yellow; // Revert to normal color
+        fireballSlider.fillRect.GetComponent<Image>().color = new Color32(122, 123, 125, 255); // Revert to normal color
+        sliderFire.color = Color.white; // Revert fire icon color
+
+        RectTransform timesTwoRect = timesTwo.GetComponent<RectTransform>();
+
+        // Mata todos los tweens del objeto y devuelve al estado original
+        timesTwoRect.DOKill();
+        timesTwoRect.localScale = Vector3.one;
+        timesTwoRect.localRotation = Quaternion.identity;
+
+        timesTwo.SetActive(false); // hide the "x2" icon
     }
 
     // Start is called before the first frame update
@@ -258,6 +302,7 @@ public class InGameUIController : MonoBehaviour
     {
         perfectZoneImage.color = normalPerfectZoneColor;
         UpdateScore(0, 0);
+        moneyQuantity.text = selectedDifficulty.config.moneyReward.ToString();
     }
 
     // Update is called once per frame
