@@ -139,9 +139,6 @@ public class GameController : MonoBehaviour
 
         isBonusReady = false;
 
-        // Store results in ScriptableObject for end game UI to display
-        matchResult.SetResult(scoreController.PlayerScore, scoreController.CpuScore);
-
         Debug.Log($"[GameController] Match ended! " +
                   $"Player: {scoreController.PlayerScore} | CPU: {scoreController.CpuScore}");
 
@@ -153,6 +150,10 @@ public class GameController : MonoBehaviour
     {
         yield return new WaitForSeconds(2f);
         DOTween.KillAll();
+
+        // Store results in ScriptableObject for end game UI to display - in here so the information passed to the other scene is correct
+        matchResult.SetResult(scoreController.PlayerScore, scoreController.CpuScore);
+
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu"); 
     }
 }
