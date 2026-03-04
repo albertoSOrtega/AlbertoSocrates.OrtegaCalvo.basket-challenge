@@ -10,7 +10,7 @@ public class BagSlotController : MonoBehaviour
     [SerializeField] private GameObject emptySlotText;
 
     // State
-    private bool isActive = false;
+    [SerializeField] private bool isActive = false;
     private Button button;
 
     private void Awake()

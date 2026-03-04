@@ -13,9 +13,11 @@ public class InGameUIController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI shootText_LS;
     [SerializeField] private TextMeshProUGUI playerScoreText_LS;
     [SerializeField] private TextMeshProUGUI cpuScoreText_LS;
-    [SerializeField] private TextMeshProUGUI timerText_LS;
+    //[SerializeField] private TextMeshProUGUI timerText_LS;
     [SerializeField] private Image perfectZoneImage_LS;
     [SerializeField] private Image backboardZoneImage_LS;
+    [SerializeField] private Image playerTimerFillImage_LS;
+    [SerializeField] private Image cpuTimerFillImage_LS;
 
     [Header("Portrait UI References")]
     [SerializeField] private Slider shootPowerSlider_PT;
@@ -23,9 +25,11 @@ public class InGameUIController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI shootText_PT;
     [SerializeField] private TextMeshProUGUI playerScoreText_PT;
     [SerializeField] private TextMeshProUGUI cpuScoreText_PT;
-    [SerializeField] private TextMeshProUGUI timerText_PT;
+    //[SerializeField] private TextMeshProUGUI timerText_PT;
     [SerializeField] private Image perfectZoneImage_PT;
     [SerializeField] private Image backboardZoneImage_PT;
+    [SerializeField] private Image playerTimerFillImage_PT;
+    [SerializeField] private Image cpuTimerFillImage_PT;
 
     [Header("Controller References")]
     public ShootingBarZoneController shootingBarZoneController;
@@ -46,10 +50,12 @@ public class InGameUIController : MonoBehaviour
     public TextMeshProUGUI shootText;
     public TextMeshProUGUI playerScoreText;
     public TextMeshProUGUI cpuScoreText;
-    public TextMeshProUGUI timerText;
+    //public TextMeshProUGUI timerText;
     public ThrowBallInputHandler throwBallInputHandler;
     public Image perfectZoneImage;
     public Image backboardZoneImage;
+    public Image playerTimerFillImage;
+    public Image cpuTimerFillImage;
 
     private void Awake()
     {
@@ -60,9 +66,11 @@ public class InGameUIController : MonoBehaviour
         shootText = isPortrait ? shootText_PT : shootText_LS;
         playerScoreText = isPortrait ? playerScoreText_PT : playerScoreText_LS;
         cpuScoreText = isPortrait ? cpuScoreText_PT : cpuScoreText_LS;
-        timerText = isPortrait ? timerText_PT : timerText_LS;
+        //timerText = isPortrait ? timerText_PT : timerText_LS;
         perfectZoneImage = isPortrait ? perfectZoneImage_PT : perfectZoneImage_LS;
         backboardZoneImage = isPortrait ? backboardZoneImage_PT : backboardZoneImage_LS;
+        playerTimerFillImage = isPortrait ? playerTimerFillImage_PT : playerTimerFillImage_LS;
+        cpuTimerFillImage = isPortrait ? cpuTimerFillImage_PT : cpuTimerFillImage_LS;
     }
 
     private void OnEnable()
@@ -214,13 +222,20 @@ public class InGameUIController : MonoBehaviour
 
     public void UpdateScore(int PlayerScore, int CPUScore)
     {
-        playerScoreText.text = $"Score\n{PlayerScore}";
-        cpuScoreText.text = $"Score\n{CPUScore}";
+        playerScoreText.text = $"{PlayerScore}";
+        cpuScoreText.text = $"{CPUScore}";
     }
 
-    public void UpdateTimer(float currentTime)
+    public void UpdateTimer(float currentTimeNormalized)
     {
-        timerText.text = $"{currentTime:0.00}s";
+        playerTimerFillImage.fillAmount = Mathf.Clamp01(currentTimeNormalized);
+        cpuTimerFillImage.fillAmount = Mathf.Clamp01(currentTimeNormalized);
+
+        if (currentTimeNormalized < 0.2f)
+        {
+            playerTimerFillImage.color = Color.red; // Change color to red when time is running out
+            cpuTimerFillImage.color = Color.red;
+        }
     }
 
     private void UpdateFireballBar(float value)

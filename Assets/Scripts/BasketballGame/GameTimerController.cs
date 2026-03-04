@@ -68,7 +68,7 @@ public class GameTimerController : MonoBehaviour
         if (!isClockRunning) return;
 
         remainingTime -= Time.deltaTime;
-        OnTimerTick?.Invoke(remainingTime);
+        OnTimerTick?.Invoke(remainingTime/matchDuration);
 
         if (!isBonusTimerPaused)
             UpdateBonusTimer();

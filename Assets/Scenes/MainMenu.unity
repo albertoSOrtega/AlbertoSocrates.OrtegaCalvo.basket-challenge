@@ -8512,7 +8512,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1206261345
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10351,6 +10351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bagImage: {fileID: 1441788126}
   emptySlotText: {fileID: 1611990714}
+  isActive: 0
 --- !u!1 &1441629311
 GameObject:
   m_ObjectHideFlags: 0
@@ -11633,6 +11634,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bagImage: {fileID: 1407593558}
   emptySlotText: {fileID: 1217234651}
+  isActive: 0
 --- !u!1 &1670021418
 GameObject:
   m_ObjectHideFlags: 0
@@ -12915,7 +12917,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1838084341
 RectTransform:
   m_ObjectHideFlags: 0
@@ -15074,6 +15076,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bagImage: {fileID: 363976737}
   emptySlotText: {fileID: 1072866121}
+  isActive: 0
 --- !u!1 &2031386027
 GameObject:
   m_ObjectHideFlags: 0
@@ -15372,7 +15375,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2044178465}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
@@ -15447,6 +15450,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bagImage: {fileID: 1206261344}
   emptySlotText: {fileID: 1838084340}
+  isActive: 1
 --- !u!1 &2045923873
 GameObject:
   m_ObjectHideFlags: 0
