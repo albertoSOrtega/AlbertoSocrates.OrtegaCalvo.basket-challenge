@@ -78,7 +78,6 @@ public class CPUController : MonoBehaviour
         isBackboardBonusActive = true;
     }
 
-    // NEW
     private void HandleBackboardBonusReset()
     {
         isBackboardBonusActive = false;
@@ -223,5 +222,28 @@ public class CPUController : MonoBehaviour
 
         // Security return — should never reach here
         return ShotType.Perfect;
+    }
+
+    public void ApplyConfig(GameDifficultyConfigSO config)
+    {
+        shootingRateMin = config.cpuShootingRateMin;
+        shootingRateMax = config.cpuShootingRateMax;
+        perfectBackboardBonusProbability = config.perfectBackboardBonusProbability;
+
+        // Reescribir los pesos manteniendo el array existente
+        for (int i = 0; i < shotWeights.Length; i++)
+        {
+            switch (shotWeights[i].shotType)
+            {
+                case ShotType.Perfect: shotWeights[i].weight = config.weightPerfect; break;
+                case ShotType.Imperfect: shotWeights[i].weight = config.weightImperfect; break;
+                case ShotType.Short: shotWeights[i].weight = config.weightShort; break;
+                case ShotType.PerfectBackboard: shotWeights[i].weight = config.weightPerfectBackboard; break;
+                case ShotType.LowerBackboard: shotWeights[i].weight = config.weightLowerBackboard; break;
+                case ShotType.UpperBackboard: shotWeights[i].weight = config.weightUpperBackboard; break;
+            }
+        }
+
+        CalculateTotalWeight(); // recalcular tras modificar pesos
     }
 }

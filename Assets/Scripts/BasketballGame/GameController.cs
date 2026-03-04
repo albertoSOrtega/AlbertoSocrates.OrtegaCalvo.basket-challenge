@@ -1,5 +1,7 @@
 //using UnityEditor.iOS;
+using DG.Tweening;
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
@@ -14,6 +16,7 @@ public class GameController : MonoBehaviour
     [SerializeField] private BallShooterController playerBallShooterController;
     [SerializeField] private CPUController cpuController;
     [SerializeField] private FireballController fireballController;
+    [SerializeField] private MatchResultSO matchResult;
 
     // Events
     public event System.Action OnBackboardBonusActivated;
@@ -139,6 +142,18 @@ public class GameController : MonoBehaviour
         Debug.Log($"[GameController] Match ended! " +
                   $"Player: {scoreController.PlayerScore} | CPU: {scoreController.CpuScore}");
 
-        // TODO: trigger end game UI
+        // Load 
+        StartCoroutine(LoadMainMenuSceneResults());
+    }
+
+    private IEnumerator LoadMainMenuSceneResults()
+    {
+        yield return new WaitForSeconds(2f);
+        DOTween.KillAll();
+
+        // Store results in ScriptableObject for end game UI to display - in here so the information passed to the other scene is correct
+        matchResult.SetResult(scoreController.PlayerScore, scoreController.CpuScore);
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu"); 
     }
 }

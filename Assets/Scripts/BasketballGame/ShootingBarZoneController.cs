@@ -175,4 +175,12 @@ public class ShootingBarZoneController : MonoBehaviour
                 return ShotType.Perfect;
         }
     }
+
+    public void ApplyConfig(GameDifficultyConfigSO config)
+    {
+        perfectZoneSize = config.perfectZoneSize;
+        imperfectZoneSize = config.imperfectZoneSize;
+        lowerBackboardSize = config.lowerBackboardSize;
+        backboardZoneSize = config.backboardZoneSize;
+    }
 }

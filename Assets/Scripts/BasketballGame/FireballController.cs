@@ -101,4 +101,10 @@ public class FireballController : MonoBehaviour
         fireballBarValue = Mathf.Clamp01(value);
         OnBarValueChanged?.Invoke(fireballBarValue);
     }
+
+    public void ApplyConfig(GameDifficultyConfigSO config)
+    {
+        perfectShotFillRate = config.perfectShotFillRate;
+        otherScoredShotFillRate = config.otherScoredShotFillRate;
+    }
 }

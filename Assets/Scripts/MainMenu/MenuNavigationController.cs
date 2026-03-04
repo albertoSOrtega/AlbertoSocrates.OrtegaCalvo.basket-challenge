@@ -41,7 +41,7 @@ public class MenuNavigationController : MonoBehaviour
     {
         public PopupType popupType;
         public GameObject popupObject;      
-        public GameObject overlayObject; // for blocing clicks outside the popup and adding a dimming effect
+        public GameObject overlayObject; // for blocking clicks outside the popup and adding a dimming effect
         public SlideDirection slideFrom = SlideDirection.Down;
 
         [Header("Transition Overrides - 0 to use global defaults")]
@@ -71,6 +71,8 @@ public class MenuNavigationController : MonoBehaviour
     [Header("References")]
     [SerializeField] private MenuAudioController audioController;
     [SerializeField] private GameObject backButton;
+    [SerializeField] private MatchResultSO matchResult; // for checking if we just played a match
+    [SerializeField] private SelectedDifficultySO selectedDifficulty;
 
     // state
     private List<MenuPanel> panels; // Reference to the currently active panel configuration (landscape or portrait) based on device orientation
@@ -114,6 +116,8 @@ public class MenuNavigationController : MonoBehaviour
             popups = landscapePopups;
         }
 
+        selectedDifficulty?.Clear();
+
         BuildAccessDict();
         BuildPopupAccessDict();
         HideAllPanels();
@@ -133,9 +137,20 @@ public class MenuNavigationController : MonoBehaviour
 
     private void Start()
     {
-        // Show the initial panel immediately, with no transition
-        ShowImmediate(initialPanel);
-        currentPanel = initialPanel;
+        if (matchResult != null && matchResult.hasResult)
+        {
+            // After a game -> go direct to Results
+            ShowImmediate(MenuPanelType.Results);
+            currentPanel = MenuPanelType.Results;
+            navigationStack.Push(MenuPanelType.MainMenu);
+            backButton.SetActive(true);
+        }
+        else
+        {
+            // Standard flow -> go to initial panel 
+            ShowImmediate(initialPanel);
+            currentPanel = initialPanel;
+        }
     }
 
     private void Update()
@@ -204,6 +219,11 @@ public class MenuNavigationController : MonoBehaviour
         currentPanel = previousPanel;
 
         backButton.SetActive(navigationStack.Count >= 1 ? true : false);
+        
+        if (activePopup != null)
+        {
+            ClosePopup();
+        }
     }
 
     // Navigate without pushing to stack — used for Results -> MainMenu so the
@@ -298,6 +318,12 @@ public class MenuNavigationController : MonoBehaviour
         audioController?.PlayBackSound();
         PerformPopupClose(activePopup);
         backButton.SetActive(navigationStack.Count >= 1 ? true : false);
+    }
+
+    public void OpenPopupInstant(PopupType type)
+    {
+        popupAccessDict[type].popupObject.SetActive(true);
+        activePopup = popupAccessDict[type];
     }
 
     // Wrapper methods for UnityEvents in buttons

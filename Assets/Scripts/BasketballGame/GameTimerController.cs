@@ -17,7 +17,6 @@ public class GameTimerController : MonoBehaviour
     // State
     private float remainingTime; // proper timer, not using Coroutines to ensure accuracy and better control over the timer
     private bool isClockRunning = false;
-    [SerializeField]
     private float bonusTimer;
     private bool isBonusTimerPaused = false;
 
@@ -80,5 +79,10 @@ public class GameTimerController : MonoBehaviour
             isClockRunning = false;
             OnMatchEnded?.Invoke();
         }
+    }
+
+    public void ApplyConfig(GameDifficultyConfigSO config)
+    {
+        matchDuration = config.matchDuration;
     }
 }
