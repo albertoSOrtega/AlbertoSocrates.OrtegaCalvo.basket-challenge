@@ -45,6 +45,7 @@ public class InGameUIController : MonoBehaviour
     public FireballController fireballController;
     public SelectedDifficultySO selectedDifficulty;
     public ThrowBallInputHandler throwBallInputHandler;
+    public PauseController pauseController;
 
     [Header("Perfect Shooting Zone Colors")]
     public Color normalPerfectZoneColor = new Color(0.75f, 0.6f, 0f, 1f);  
@@ -295,6 +296,11 @@ public class InGameUIController : MonoBehaviour
         timesTwoRect.localRotation = Quaternion.identity;
 
         timesTwo.SetActive(false); // hide the "x2" icon
+    }
+
+    public void OnPauseButtonPressed()
+    {
+        pauseController.TogglePause();
     }
 
     // Start is called before the first frame update
