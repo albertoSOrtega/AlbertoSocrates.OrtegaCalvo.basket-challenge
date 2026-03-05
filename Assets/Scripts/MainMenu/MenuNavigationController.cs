@@ -69,7 +69,8 @@ public class MenuNavigationController : MonoBehaviour
     [SerializeField] private float overlayMaxAlpha = 0.6f;
 
     [Header("References")]
-    [SerializeField] private GameObject backButton;
+    [SerializeField] private GameObject backButtonLS;
+    [SerializeField] private GameObject backButtonPT;
     [SerializeField] private MatchResultSO matchResult; // for checking if we just played a match
     [SerializeField] private SelectedDifficultySO selectedDifficulty;
 
@@ -79,6 +80,7 @@ public class MenuNavigationController : MonoBehaviour
     private Stack<MenuPanelType> navigationStack = new Stack<MenuPanelType>(); // Navigation stack — enables automatic Back behaviour and Android back gesture
     private MenuPanelType currentPanel;
     private bool isTransitioning = false;
+    private GameObject backButton;
 
     private PopupPanel activePopup = null;
     private bool isPopupTransitioning = false;
@@ -108,14 +110,16 @@ public class MenuNavigationController : MonoBehaviour
         {
             panels = portraitPanels;
             popups = portraitPopups;
+            backButton = backButtonPT;
         }
         else
         {
             panels = landscapePanels;
             popups = landscapePopups;
+            backButton = backButtonLS;
         }
 
-        selectedDifficulty?.Clear();
+        //selectedDifficulty?.Clear();
 
         BuildAccessDict();
         BuildPopupAccessDict();
