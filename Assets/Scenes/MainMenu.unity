@@ -21836,28 +21836,28 @@ MonoBehaviour:
     slideDistanceOverride: 0
   - panelType: 1
     panelObject: {fileID: 711131879}
-    slideFrom: 2
+    slideFrom: 0
     durationOverride: 0
     slideDistanceOverride: 0
   - panelType: 2
     panelObject: {fileID: 1000312189}
-    slideFrom: 2
+    slideFrom: 0
     durationOverride: 0
     slideDistanceOverride: 0
   - panelType: 3
     panelObject: {fileID: 418862503}
-    slideFrom: 2
+    slideFrom: 0
     durationOverride: 0
     slideDistanceOverride: 0
   - panelType: 4
     panelObject: {fileID: 393765917}
-    slideFrom: 2
+    slideFrom: 0
     durationOverride: 0
     slideDistanceOverride: 0
   portraitPanels:
   - panelType: 0
     panelObject: {fileID: 846786118}
-    slideFrom: 0
+    slideFrom: 1
     durationOverride: 0
     slideDistanceOverride: 0
   - panelType: 1
@@ -21891,7 +21891,7 @@ MonoBehaviour:
   - popupType: 1
     popupObject: {fileID: 1271482586}
     overlayObject: {fileID: 1016329589}
-    slideFrom: 0
+    slideFrom: 2
     durationOverride: 0
     slideDistanceOverride: 0
   - popupType: 2
@@ -21910,7 +21910,7 @@ MonoBehaviour:
   - popupType: 1
     popupObject: {fileID: 293456034}
     overlayObject: {fileID: 765667008}
-    slideFrom: 0
+    slideFrom: 2
     durationOverride: 0
     slideDistanceOverride: 0
   - popupType: 2
