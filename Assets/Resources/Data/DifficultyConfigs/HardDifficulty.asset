@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ad28d76af14d504b84008caa436002c, type: 3}
+  m_Name: HardDifficulty
+  m_EditorClassIdentifier: 
+  cpuShootingRateMin: 1.5
+  cpuShootingRateMax: 2
+  weightPerfect: 0.6
+  weightImperfect: 0.2
+  weightShort: 0.05
+  weightPerfectBackboard: 0.05
+  weightLowerBackboard: 0.05
+  weightUpperBackboard: 0.05
+  perfectBackboardBonusProbability: 0.8
+  perfectZoneSize: 0.1
+  imperfectZoneSize: 0.05
+  lowerBackboardSize: 0.1
+  backboardZoneSize: 0.05
+  matchDuration: 70
+  perfectShotFillRate: 0.25
+  otherScoredShotFillRate: 0.15
+  moneyReward: 100
+  bagReward: 1

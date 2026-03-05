@@ -1,0 +1,94 @@
+using UnityEngine;
+using UnityEngine.UI;
+using DG.Tweening;
+using TMPro;
+
+public class CardController : MonoBehaviour
+{
+    [Header("Sprites")]
+    [SerializeField] private Sprite cardBackSprite;   // initial sprite
+    [SerializeField] private Sprite cardFrontSprite;  // sprite to reveal
+
+    [Header("Flip Configuration")]
+    [SerializeField] private float flipHalfDuration = 0.2f;
+    [SerializeField] private Ease flipEase = Ease.InOutSine;
+
+    [Header("Currency Reference - null if there is no currency to increase")]
+    [SerializeField] private TextMeshProUGUI currencyText;
+    [SerializeField] private int currencyAmount;
+
+    [Header("Currency Config and Refs")]
+    [SerializeField] private bool isMoney; 
+
+    // References
+    private Image cardImage;
+
+    // State
+    private bool isFlipped = false;
+    private bool isFlipping = false;
+
+    private void Awake()
+    {
+        cardImage = GetComponent<Image>();
+        cardImage.sprite = cardBackSprite;
+    }
+
+    public void OnCardPressed()
+    {
+        if (isFlipping || isFlipped) return;
+        FlipCard();
+    }
+
+    private void FlipCard()
+    {
+        isFlipping = true;
+
+        GameAudioController.instance?.PlayCardFlipSound();
+
+        // first half: scale X from 1 to 0
+        transform.DOScaleX(0f, flipHalfDuration)
+            .SetEase(flipEase)
+            .OnComplete(() =>
+            {
+                // change sprite in the middle of the animation
+                cardImage.sprite = cardFrontSprite;
+
+                IncreaseCurrencyAmount();
+
+                // second half: scale X from 0 to 1
+                transform.DOScaleX(1f, flipHalfDuration)
+                    .SetEase(flipEase)
+                    .OnComplete(() =>
+                    {
+                        isFlipped = true;
+                        isFlipping = false;
+                    });
+            });
+    }
+
+    private void IncreaseCurrencyAmount()
+    {
+        if (currencyText == null) return;
+        var currency = SessionState.I.currency;
+
+        if (isMoney)
+        {
+            currency.money += currencyAmount;
+            currencyText.text = currency.money.ToString();
+        }
+        else
+        {
+            currency.gold += currencyAmount;
+            currencyText.text = currency.gold.ToString();
+        }
+    }
+
+    public void ResetCard()
+    {
+        transform.DOKill();
+        isFlipped = false;
+        isFlipping = false;
+        transform.localScale = Vector3.one;
+        cardImage.sprite = cardBackSprite;
+    }
+}

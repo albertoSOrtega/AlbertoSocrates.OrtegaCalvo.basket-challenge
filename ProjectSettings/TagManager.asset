@@ -9,6 +9,7 @@ TagManager:
   - Backboard
   - BackboardTrigger
   - Ball
+  - Floor
   layers:
   - Default
   - TransparentFX
@@ -18,7 +19,7 @@ TagManager:
   - UI
   - Ball
   - GameEntity
-  - 
+  - SwipeTrail
   - 
   - 
   - 
