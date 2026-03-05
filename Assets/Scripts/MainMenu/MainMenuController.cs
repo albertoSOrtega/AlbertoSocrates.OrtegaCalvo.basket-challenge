@@ -16,6 +16,8 @@ public class MainMenuController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (SessionState.I == null) return;
+
         var currency = SessionState.I.currency;
         moneyText.text = currency.money.ToString();
         goldText.text = currency.gold.ToString();
