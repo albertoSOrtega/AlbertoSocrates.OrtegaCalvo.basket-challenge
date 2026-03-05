@@ -73,10 +73,14 @@ public class GameTimerController : MonoBehaviour
         if (!isBonusTimerPaused)
             UpdateBonusTimer();
 
+        if (remainingTime <= 10f && remainingTime + Time.deltaTime > 10f)
+            GameAudioController.instance?.PlayTictacSound();
+
         if (remainingTime <= 0f)
         {
             remainingTime = 0f;
             isClockRunning = false;
+            GameAudioController.instance?.StopTictacSound();
             OnMatchEnded?.Invoke();
         }
     }

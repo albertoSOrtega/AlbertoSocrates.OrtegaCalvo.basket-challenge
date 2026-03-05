@@ -43,7 +43,7 @@ public class CardController : MonoBehaviour
     {
         isFlipping = true;
 
-        MenuAudioController.instance?.PlayCardFlipSound();
+        GameAudioController.instance?.PlayCardFlipSound();
 
         // first half: scale X from 1 to 0
         transform.DOScaleX(0f, flipHalfDuration)

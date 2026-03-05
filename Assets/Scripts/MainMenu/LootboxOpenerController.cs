@@ -51,7 +51,7 @@ public class LootboxOpenerController : MonoBehaviour
 
     private void ShowRewardsPopup()
     {
-        MenuAudioController.instance?.PlayOpenLootboxSound();
+        GameAudioController.instance?.PlayOpenLootboxSound();
         MenuNavigationController.instance.OpenPopupInstant(MenuNavigationController.PopupType.LootboxRewards);
         AnimateCards();
     }

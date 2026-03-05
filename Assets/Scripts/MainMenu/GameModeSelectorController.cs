@@ -15,7 +15,7 @@ public class GameModeSelectorController : MonoBehaviour
 
     private void StartGame(GameDifficultyConfigSO config)
     {
-        MenuAudioController.instance?.PlayConfirmSound();
+        GameAudioController.instance?.PlayConfirmSound();
         DOTween.KillAll();
         matchResult?.Clear();
         selectedDifficulty.config = config;

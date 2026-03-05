@@ -57,7 +57,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleShotCompleted(ShotType shotType)
     {
-        BallPoolController.instance.ReturnBall(currentBall, 2f);
+        BallPoolController.instance.ReturnBall(currentBall, 1f);
         currentBall = null;
 
         shootingPositionController.AdvancePosition();
@@ -131,6 +131,8 @@ public class PlayerController : MonoBehaviour
         // get the shot type and set up the shotType in the ball
         ShotType shotType = shootingBarZoneController.GetShotType(shootPower);
         currentBall.GetComponent<BallController>().CurrentShotType = shotType;
+
+        GameAudioController.instance?.PlayPlayerMoanSound();
 
         transform.DOLocalJump(transform.position, 1f, 1, 1f);
         yield return new WaitForSeconds(0.5f); // Wait for the jump to reach its peak

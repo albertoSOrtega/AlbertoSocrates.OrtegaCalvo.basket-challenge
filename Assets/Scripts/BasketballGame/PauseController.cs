@@ -83,9 +83,14 @@ public class PauseController : MonoBehaviour
 
     public void Pause()
     {
+        GameAudioController.instance?.PlayConfirmSound();
+
         isPaused = true;
         Time.timeScale = 0f;
         DOTween.PauseAll();
+
+        GameAudioController.instance?.PauseMusic();
+
         throwBallInputHandler.enabled = false;
         pauseMenuUI.SetActive(true);
 
@@ -99,6 +104,8 @@ public class PauseController : MonoBehaviour
 
     public void Resume()
     {
+        GameAudioController.instance?.PlayConfirmSound();
+
         isPaused = false;
         pauseMenuUI.SetActive(false);
 
@@ -110,6 +117,9 @@ public class PauseController : MonoBehaviour
 
         Time.timeScale = 1f;
         DOTween.PlayAll();
+
+        GameAudioController.instance?.ResumeMusic();
+
         throwBallInputHandler.enabled = true;
     }
 
@@ -117,6 +127,11 @@ public class PauseController : MonoBehaviour
     {
         Time.timeScale = 1f;
         DOTween.KillAll();
+
+        // Handle sound cleanup
+        GameAudioController.instance?.StopAllSFX();
+        GameAudioController.instance?.PlayMenuMusic();
+
         SceneManager.LoadScene("MainMenu");
     }
 
@@ -124,8 +139,11 @@ public class PauseController : MonoBehaviour
     {
         Time.timeScale = 1f;
         DOTween.KillAll();
+
+        GameAudioController.instance?.PlayConfirmSound();
+
         #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+        UnityEditor.EditorApplication.isPlaying = false;
         #else
             Application.Quit();
         #endif

@@ -47,7 +47,7 @@ public class DailyMissionController : MonoBehaviour
 
     public void OnRewardClicked()
     {
-        MenuAudioController.instance.PlayRedeemDailyMissionSound();
+        GameAudioController.instance.PlayRedeemDailyMissionSound();
 
         var daily = SessionState.I.daily;
         var currency = SessionState.I.currency;

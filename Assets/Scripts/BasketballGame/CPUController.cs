@@ -95,7 +95,7 @@ public class CPUController : MonoBehaviour
 
     private void HandleShotCompleted(ShotType shotType)
     {
-        BallPoolController.instance.ReturnBall(currentBall, 2f);
+        BallPoolController.instance.ReturnBall(currentBall, 1f);
         currentBall = null;
         isShooting = false;
 

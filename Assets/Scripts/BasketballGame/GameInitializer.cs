@@ -34,6 +34,8 @@ public class GameInitializer : MonoBehaviour
         }
 
         ApplyDifficultyConfig();
+
+        GameAudioController.instance?.PlayGameMusic();
     }
 
     private void ApplyDifficultyConfig()

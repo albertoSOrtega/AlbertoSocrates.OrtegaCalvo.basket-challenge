@@ -87,12 +87,14 @@ public class FireballController : MonoBehaviour
     private void ActivateFireball()
     {
         isFireballBonusActive = true;
+        GameAudioController.instance?.PlayFireSound();
         OnFireballBonusActivated?.Invoke(); // visuals
     }
 
     private void DeactivateFireball()
     {
         isFireballBonusActive = false;
+        GameAudioController.instance?.PlayFireOverSound();
         OnFireballBonusDeactivated?.Invoke(); // visuals
     }
 
