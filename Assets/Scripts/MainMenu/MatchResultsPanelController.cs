@@ -51,10 +51,12 @@ public class MatchResultsPanelController : MonoBehaviour
 
         if (matchResult.playerScore > matchResult.cpuScore)
         {
+            MenuAudioController.instance?.PlayWinSound();
             UpdateRewards();
         }
         else
         {
+            MenuAudioController.instance?.PlayLoseDrawSound();
             rewardBag.SetActive(false);
             rewardMoney.SetActive(false);
         }
