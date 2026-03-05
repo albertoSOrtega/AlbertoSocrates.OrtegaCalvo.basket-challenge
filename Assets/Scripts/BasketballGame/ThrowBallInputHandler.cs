@@ -258,6 +258,7 @@ public class ThrowBallInputHandler : MonoBehaviour
     private void EndTrackingSwipe(Vector2 releasePosition)
     {
         isTrackingSwipe = false;
+        isTimerStarted = false;
         swipeTimer = 0f;
 
         float verticalDelta = releasePosition.y - startPosition.y;
