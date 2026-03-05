@@ -13,7 +13,7 @@ public class BasketballDetectorController : MonoBehaviour
 
         // Only count if ball is moving downward (entered from above)
         if (ballRb.velocity.y >= 0f) return;
-
+        
         BallController ballController = other.GetComponent<BallController>();
 
         Debug.Log($"[BasketDetectorController] BASKET! ShotType: {ballController.CurrentShotType}");

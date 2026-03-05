@@ -45,16 +45,20 @@ public class MatchResultsPanelController : MonoBehaviour
         var daily = SessionState.I.daily;
         var currency = SessionState.I.currency;
 
+        GameAudioController.instance?.PlayMenuMusic();
+
         // Scores
         playerScoreText.text = matchResult.playerScore.ToString();
         cpuScoreText.text = matchResult.cpuScore.ToString();
 
         if (matchResult.playerScore > matchResult.cpuScore)
         {
+            GameAudioController.instance?.PlayWinSound();
             UpdateRewards();
         }
         else
         {
+            GameAudioController.instance?.PlayLoseDrawSound();
             rewardBag.SetActive(false);
             rewardMoney.SetActive(false);
         }

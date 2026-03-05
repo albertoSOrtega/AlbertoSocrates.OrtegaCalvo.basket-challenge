@@ -57,6 +57,7 @@ public class BackboardCollisionController : MonoBehaviour
         else
         {
             BackboardVisualFeedbackController.instance.TriggerHitFlash();
+            GameAudioController.instance.PlayBackboardBounceSound();
             Debug.Log("[Trigger] Collision detected with the backboard");
         }
         if (!isPerfectBackboardShot || hasRebounded) return;
@@ -76,6 +77,24 @@ public class BackboardCollisionController : MonoBehaviour
         StartCoroutine(EnableBackboardCollider(backboardEnableTime));
 
         Debug.Log("[Trigger] Impacto detectado en: " + impactPoint);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Backboard"))
+        {
+            ShotType shotType = GetComponent<BallController>().CurrentShotType;
+
+            if (shotType == ShotType.Imperfect || (shotType == ShotType.PerfectBackboard && hasRebounded))
+            {
+                GameAudioController.instance.PlayRimBounceSound();
+            }
+        }
+        else if (collision.gameObject.CompareTag("Floor"))
+        {
+            GameAudioController.instance.PlayFloorBounceSound();
+        }
+
     }
 
     public IEnumerator EnableBackboardCollider(float delay)

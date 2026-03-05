@@ -72,6 +72,8 @@ public class InitialScreenController : MonoBehaviour
     {
         inputEnabled = false;
 
+        GameAudioController.instance?.PlayFirstTapSound();
+
         logo.DOKill();
         continueText.DOKill();
 

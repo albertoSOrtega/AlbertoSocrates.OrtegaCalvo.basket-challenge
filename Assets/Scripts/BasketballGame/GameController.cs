@@ -153,6 +153,8 @@ public class GameController : MonoBehaviour
         yield return new WaitForSeconds(2f);
         DOTween.KillAll();
 
+        GameAudioController.instance?.StopFireSound();
+
         // Store results in ScriptableObject for end game UI to display - in here so the information passed to the other scene is correct
         matchResult.SetResult(scoreController.PlayerScore, scoreController.CpuScore);
 

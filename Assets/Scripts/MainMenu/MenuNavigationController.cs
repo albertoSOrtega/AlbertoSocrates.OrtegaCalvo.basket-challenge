@@ -69,7 +69,6 @@ public class MenuNavigationController : MonoBehaviour
     [SerializeField] private float overlayMaxAlpha = 0.6f;
 
     [Header("References")]
-    [SerializeField] private MenuAudioController audioController;
     [SerializeField] private GameObject backButton;
     [SerializeField] private MatchResultSO matchResult; // for checking if we just played a match
     [SerializeField] private SelectedDifficultySO selectedDifficulty;
@@ -166,7 +165,7 @@ public class MenuNavigationController : MonoBehaviour
         {
             // Popups take priority over panel back navigation
             if (activePopup != null)
-                ClosePopup();
+                ClosePopup(false);
             else
                 NavigateBack();
             return;
@@ -177,7 +176,7 @@ public class MenuNavigationController : MonoBehaviour
         if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
         {
             if (activePopup != null)
-                ClosePopup();
+                ClosePopup(false);
             else
                 NavigateBack();
             return;
@@ -200,7 +199,6 @@ public class MenuNavigationController : MonoBehaviour
     {
         if (isTransitioning || target == currentPanel) return;
 
-        audioController?.PlayNavigationSound();
         navigationStack.Push(currentPanel);
         PerformTransition(currentPanel, target, true);
         currentPanel = target;
@@ -213,7 +211,7 @@ public class MenuNavigationController : MonoBehaviour
     {
         if (isTransitioning || navigationStack.Count == 0) return;
 
-        audioController?.PlayBackSound();
+        GameAudioController.instance?.PlayBackSound();
         MenuPanelType previousPanel = navigationStack.Pop();
         PerformTransition(currentPanel, previousPanel, false);
         currentPanel = previousPanel;
@@ -222,7 +220,7 @@ public class MenuNavigationController : MonoBehaviour
         
         if (activePopup != null)
         {
-            ClosePopup();
+            ClosePopup(false);
         }
     }
 
@@ -232,7 +230,6 @@ public class MenuNavigationController : MonoBehaviour
     {
         if (isTransitioning) return;
 
-        audioController?.PlayNavigationSound();
         navigationStack.Clear();
         PerformTransition(currentPanel, targetPanel, false);
         currentPanel = targetPanel;
@@ -242,8 +239,16 @@ public class MenuNavigationController : MonoBehaviour
 
     // Wrapper methods for UnityEvents in buttons — these can be assigned directly in the Inspector without needing a separate script for each button
     public void NavigateToMainMenu() => NavigateToNewPanel(MenuPanelType.MainMenu);
-    public void NavigateToGameModeSelector() => NavigateToNewPanel(MenuPanelType.GameModeSelector);
-    public void NavigateToLootboxOpener() => NavigateToNewPanel(MenuPanelType.LootboxOpener);
+    public void NavigateToGameModeSelector() 
+    {
+        GameAudioController.instance?.PlayConfirmSound();
+        NavigateToNewPanel(MenuPanelType.GameModeSelector);
+    }
+    public void NavigateToLootboxOpener()
+    {
+        GameAudioController.instance?.PlayConfirmSound();
+        NavigateToNewPanel(MenuPanelType.LootboxOpener);
+    }
     public void NavigateToResults() => NavigateToNewPanel(MenuPanelType.Results);
     public void NavigateAndClearStackMainMenu() => NavigateAndClearStack(MenuPanelType.MainMenu);
 
@@ -305,17 +310,21 @@ public class MenuNavigationController : MonoBehaviour
 
         if (!popupAccessDict.TryGetValue(type, out PopupPanel popup)) return;
 
-        audioController?.PlayNavigationSound();
+        GameAudioController.instance?.PlayPopupSlideInSound();
+
         activePopup = popup;
         PerformPopupOpen(popup);
         backButton.SetActive(false);
     }
 
-    public void ClosePopup()
+    public void ClosePopup(bool playSwipeSound)
     {
         if (isPopupTransitioning || activePopup == null) return;
 
-        audioController?.PlayBackSound();
+        GameAudioController.instance?.PlayCancelSound();
+        if (playSwipeSound)
+        GameAudioController.instance?.PlayPopupSlideOutSound();
+
         PerformPopupClose(activePopup);
         backButton.SetActive(navigationStack.Count >= 1 ? true : false);
     }
@@ -327,14 +336,20 @@ public class MenuNavigationController : MonoBehaviour
     }
 
     // Wrapper methods for UnityEvents in buttons
-    public void OpenQuitGamePopup() => OpenPopup(PopupType.QuitGame);
-    public void OpenDailyMissionsPopup() => OpenPopup(PopupType.DailyMissions);
+    public void OpenQuitGamePopup() 
+    { 
+        GameAudioController.instance?.PlayConfirmSound(); 
+        OpenPopup(PopupType.QuitGame); 
+    }
+    public void OpenDailyMissionsPopup()
+    {
+        GameAudioController.instance?.PlayConfirmSound();
+        OpenPopup(PopupType.DailyMissions);
+    }
     public void OpenLootboxRewardsPopup() => OpenPopup(PopupType.LootboxRewards);
+    
 
-    // -------------------------------------------------------------------------
     // Popup Transitions
-    // -------------------------------------------------------------------------
-
     private void PerformPopupOpen(PopupPanel popup)
     {
         isPopupTransitioning = true;

@@ -9,6 +9,7 @@ TagManager:
   - Backboard
   - BackboardTrigger
   - Ball
+  - Floor
   layers:
   - Default
   - TransparentFX

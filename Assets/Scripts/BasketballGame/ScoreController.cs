@@ -38,9 +38,23 @@ public class ScoreController : MonoBehaviour
         LastScoredPoints = points;
 
         if (entity == GameEntity.Player)
+        {
+            // here because of the delay
+            if (shotType == ShotType.Perfect)
+                GameAudioController.instance?.PlayNetPerfectSound();
+            else
+                GameAudioController.instance?.PlayNetNormalSound();
+
+            if (currentBackboardBonus > 0 && shotType == ShotType.PerfectBackboard)
+                GameAudioController.instance?.PlayNiceShotSound();
+
             PlayerScore += points;
+        }
         else
+        {
+            GameAudioController.instance?.PlayNetNormalSound();
             CpuScore += points;
+        }
 
         OnScoreUpdated?.Invoke(PlayerScore, CpuScore);
 
