@@ -50,6 +50,7 @@ public class ThrowBallInputHandler : MonoBehaviour
     private bool isTrackingSwipe = false;
     private bool isInputEnabled = false; // Blocked until the camera is ready
     private bool isWaitingForRelease = false; // for preventing ghost swipes
+    private bool isTimerStarted = false; // for enabling staying in the "cancel" shot area
 
     // New Input System device references
     private Touchscreen touchscreen;
@@ -105,7 +106,7 @@ public class ThrowBallInputHandler : MonoBehaviour
         }
 
         // Swipe time limit
-        if (isTrackingSwipe)
+        if (isTrackingSwipe && isTimerStarted)
         {
             swipeTimer += Time.deltaTime;
             if (swipeTimer >= maxSwipeTime)
@@ -222,6 +223,7 @@ public class ThrowBallInputHandler : MonoBehaviour
         startPosition = screenPosition;
         lastSwipeY = screenPosition.y;
         isTrackingSwipe = true;
+        isTimerStarted = false;
         currentShootPower = 0f;
         swipeTimer = 0f;
 
@@ -241,6 +243,14 @@ public class ThrowBallInputHandler : MonoBehaviour
         float verticalDelta = lastSwipeY - startPosition.y;
         currentShootPower = Mathf.Clamp01(verticalDelta / maxSwipeDistancePx);
 
+        // Timer starts when the player reaches the minimum swipe distance, allowing them to hold in the "shoot zone" for a short time without losing power
+        if (!isTimerStarted && verticalDelta >= minSwipeDistancePx)
+        {
+            isTimerStarted = true;
+            swipeTimer = 0f;
+            Debug.Log($"[ThrowBallInputHandler] Timer started - shot zone entered.");
+        }
+
         OnShootPowerChanged?.Invoke(currentShootPower);
     }
 
@@ -248,6 +258,7 @@ public class ThrowBallInputHandler : MonoBehaviour
     private void EndTrackingSwipe(Vector2 releasePosition)
     {
         isTrackingSwipe = false;
+        isTimerStarted = false;
         swipeTimer = 0f;
 
         float verticalDelta = releasePosition.y - startPosition.y;

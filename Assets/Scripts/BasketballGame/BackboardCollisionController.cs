@@ -15,15 +15,19 @@ public class BackboardCollisionController : MonoBehaviour
     private bool isPerfectBackboardShot = false;
     private Vector3 velocityBeforeImpact;
     private Transform rimTransform;
+    private Collider backboardCollider;
+    private Collider ballCollider;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        ballCollider = GetComponent<Collider>();
     }
 
     private void Start()
     {
         rimTransform = GameObject.FindGameObjectWithTag("Rim").transform;
+        backboardCollider = GameObject.FindGameObjectWithTag("Backboard").GetComponent<Collider>();
     }
 
     public void ResetRebound()
@@ -38,7 +42,8 @@ public class BackboardCollisionController : MonoBehaviour
 
     public void DisableBackboardCollider()
     {
-        GameObject.FindGameObjectWithTag("Backboard").GetComponent<Collider>().enabled = false;
+        if (backboardCollider != null && ballCollider != null)
+            Physics.IgnoreCollision(ballCollider, backboardCollider, true);
     }
 
     private void FixedUpdate()
@@ -74,6 +79,7 @@ public class BackboardCollisionController : MonoBehaviour
 
         isPerfectBackboardShot = false;
         // enable the backboard collider after a short delay to allow the ball to rebound without interference
+        DisableBackboardCollider();
         StartCoroutine(EnableBackboardCollider(backboardEnableTime));
 
         Debug.Log("[Trigger] Impacto detectado en: " + impactPoint);
@@ -100,7 +106,8 @@ public class BackboardCollisionController : MonoBehaviour
     public IEnumerator EnableBackboardCollider(float delay)
     {
         yield return new WaitForSeconds(delay);
-        GameObject.FindGameObjectWithTag("Backboard").GetComponent<Collider>().enabled = true;
+        if (backboardCollider != null && ballCollider != null)
+            Physics.IgnoreCollision(ballCollider, backboardCollider, false);
     }
 
     private void ApplyGuidedRebound(Vector3 impactPoint, Vector3 normal)
